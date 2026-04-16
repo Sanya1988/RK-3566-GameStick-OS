@@ -1,0 +1,107 @@
+{
+    "comment": "Latest release of ES-DE Frontend",
+    "website": "https://es-de.org/",
+    "repository": "https://gitlab.com/es-de/",
+    "stable": {
+        "version": "3.3.0",
+        "release": "49",
+        "date": "2025-07-15",
+        "androidVersionName": "3.3.0-50",
+        "androidVersionCode": "50",
+        "androidDate": "2025-07-18",
+        "packages": [
+            {
+                "name": "WindowsPortable",
+                "filename": "ES-DE_3.3.0-x64_Portable.zip",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/210673039/download",
+                "md5": "9548bf3053cc42ca1152360e512cc516",
+                "message": ""
+            },
+            {
+                "name": "WindowsInstaller",
+                "filename": "ES-DE_3.3.0-x64.exe",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/210672910/download",
+                "md5": "876e9f9e8a243ae67760181517722cb3",
+                "message": ""
+            },
+            {
+                "name": "macOSApple",
+                "filename": "ES-DE_3.3.0-arm64.dmg",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/210210122/download",
+                "md5": "aad2f9f862e9525ec3f264a7833e7ae4",
+                "message": ""
+            },
+            {
+                "name": "macOSIntel",
+                "filename": "ES-DE_3.3.0-x64.dmg",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/212641229/download",
+                "md5": "9aa9f7813a19b4bdc0aabd221a41054f",
+                "message": ""
+            },
+            {
+                "name": "LinuxAppImage",
+                "filename": "ES-DE_x64.AppImage",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/210210324/download",
+                "md5": "8af76376d416dcd30a0cc42e57f0f33d",
+                "message": ""
+            },
+            {
+                "name": "LinuxSteamDeckAppImage",
+                "filename": "ES-DE_x64_SteamDeck.AppImage",
+                "url": "https://gitlab.com/es-de/emulationstation-de/-/package_files/210210368/download",
+                "md5": "baba5ae1b1cc5d9dab51621471396d85",
+                "message": ""
+            }
+        ]
+    },
+    "prerelease": {
+        "comment": "The fields below will be blank if there is no prerelease available",
+        "version": "",
+        "release": "",
+        "date": "",
+        "packages": [
+            {
+                "name": "WindowsPortable",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            },
+            {
+                "name": "WindowsInstaller",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            },
+            {
+                "name": "macOSApple",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            },
+            {
+                "name": "macOSIntel",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            },
+            {
+                "name": "LinuxAppImage",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            },
+            {
+                "name": "LinuxSteamDeckAppImage",
+                "filename": "",
+                "url": "",
+                "md5": "",
+                "message": ""
+            }
+        ]
+    }
+}

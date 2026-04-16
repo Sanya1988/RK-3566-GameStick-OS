@@ -1,0 +1,117 @@
+#!/bin/sh
+
+set -eu
+
+. /usr/lib/gamestick/storage-common.sh
+
+rc=0
+
+copy_missing_tree() {
+	src=$1
+	dst=$2
+
+	[ -d "$src" ] || return 0
+	mkdir -p "$dst"
+
+	(
+		cd "$src"
+		find . -mindepth 1 -type d | sort
+	) | while IFS= read -r rel_path; do
+		[ -n "$rel_path" ] || continue
+		mkdir -p "$dst/${rel_path#./}"
+	done
+
+	(
+		cd "$src"
+		find . -mindepth 1 -type f | sort
+	) | while IFS= read -r rel_path; do
+		[ -n "$rel_path" ] || continue
+		target_path="$dst/${rel_path#./}"
+		[ -e "$target_path" ] || cp -f "$src/${rel_path#./}" "$target_path"
+	done
+}
+
+seed_missing_roms() {
+	seed_dir=/usr/share/gamestick/roms-seed
+	stamp="$GAMESTICK_USERDATA_MOUNTPOINT/roms/.gamestick_roms_seed_v1"
+
+	[ -d "$seed_dir" ] || return 0
+	[ -f "$stamp" ] && return 0
+
+	copy_missing_tree "$seed_dir" "$GAMESTICK_USERDATA_MOUNTPOINT/roms"
+	: >"$stamp"
+	sync
+}
+
+seed_missing_screensaver() {
+	seed_dir=/usr/share/gamestick/screensaver-seed
+	stamp="$GAMESTICK_USERDATA_MOUNTPOINT/screensaver/.gamestick_screensaver_seed_v1"
+
+	[ -d "$seed_dir" ] || return 0
+	[ -f "$stamp" ] && return 0
+
+	copy_missing_tree "$seed_dir" "$GAMESTICK_USERDATA_MOUNTPOINT/screensaver"
+	: >"$stamp"
+	sync
+}
+
+mount_userdata_storage() {
+	mkdir -p "$GAMESTICK_USERDATA_MOUNTPOINT"
+	if grep -qs " $GAMESTICK_USERDATA_MOUNTPOINT " /proc/mounts; then
+		return 0
+	fi
+
+	dev="$(find_userdata_device || true)"
+	if [ -z "$dev" ]; then
+		log "USERDATA device is not available"
+		return 1
+	fi
+
+	fs_type="$(device_fs_type "$dev")"
+	case "$fs_type" in
+		exfat)
+			if ! mount_exfat_storage "$dev" "$GAMESTICK_USERDATA_MOUNTPOINT"; then
+				log "failed to mount $dev as exFAT at $GAMESTICK_USERDATA_MOUNTPOINT"
+				return 1
+			fi
+			;;
+		ntfs)
+			if ! ntfs-3g -o rw,noatime,big_writes,uid=0,gid=0,umask=022 "$dev" "$GAMESTICK_USERDATA_MOUNTPOINT"; then
+				log "failed to mount $dev as NTFS at $GAMESTICK_USERDATA_MOUNTPOINT"
+				return 1
+			fi
+			;;
+		*)
+			log "unsupported filesystem '$fs_type' on $dev"
+			return 1
+			;;
+	esac
+
+	ensure_userdata_layout "$GAMESTICK_USERDATA_MOUNTPOINT"
+	return 0
+}
+
+case "$1" in
+	start)
+		mount_userdata_storage || rc=$?
+		if [ "$rc" -eq 0 ]; then
+			seed_missing_roms || rc=$?
+			seed_missing_screensaver || rc=$?
+		fi
+		;;
+	stop)
+		if grep -qs " $GAMESTICK_USERDATA_MOUNTPOINT " /proc/mounts; then
+			umount "$GAMESTICK_USERDATA_MOUNTPOINT" >/dev/null 2>&1 || true
+		fi
+		;;
+	restart)
+		"$0" stop || rc=$?
+		"$0" start || rc=$?
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}" >&2
+		exit 1
+		;;
+esac
+
+exit "$rc"

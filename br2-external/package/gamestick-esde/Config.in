@@ -1,0 +1,24 @@
+config BR2_PACKAGE_GAMESTICK_ESDE
+	bool "gamestick-esde"
+	depends on BR2_TOOLCHAIN_USES_GLIBC
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on !BR2_STATIC_LIBS
+	depends on BR2_PACKAGE_HAS_LIBEGL
+	depends on BR2_PACKAGE_HAS_LIBGLES
+	depends on BR2_PACKAGE_GAMESTICK_RETROARCH
+	select BR2_PACKAGE_ALSA_LIB
+	select BR2_PACKAGE_FFMPEG
+	select BR2_PACKAGE_FREETYPE
+	select BR2_PACKAGE_GAMESTICK_FREEIMAGE
+	select BR2_PACKAGE_HARFBUZZ
+	select BR2_PACKAGE_ICU
+	select BR2_PACKAGE_POPPLER
+	select BR2_PACKAGE_PUGIXML
+	select BR2_PACKAGE_SDL2
+	help
+	  ES-DE frontend integrated against the bundled esde source tree,
+	  configured for offline GameStick use and RetroArch launching.
+
+comment "gamestick-esde needs EGL/GLES, glibc, C++, threads and shared libs"
+	depends on !BR2_PACKAGE_HAS_LIBEGL || !BR2_PACKAGE_HAS_LIBGLES || !BR2_PACKAGE_GAMESTICK_RETROARCH || !(BR2_TOOLCHAIN_USES_GLIBC && BR2_INSTALL_LIBSTDCPP && BR2_TOOLCHAIN_HAS_THREADS) || BR2_STATIC_LIBS

@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+
+state_dir="/run/gamestick"
+poweroff_marker="$state_dir/poweroff-requested"
+asset_dir="/usr/share/gamestick/shutdown"
+
+show_image() {
+	image_path=$1
+	console_device="/dev/tty1"
+
+	[ -f "$image_path" ] || return 0
+	command -v fbv >/dev/null 2>&1 || return 0
+
+	if [ ! -c "$console_device" ]; then
+		console_device="/dev/console"
+	fi
+	[ -c "$console_device" ] || return 0
+
+	fbv -c -u -i -f -s 1 "$image_path" <"$console_device" >"$console_device" 2>&1 || true
+}
+
+case "${1:-}" in
+	mark-poweroff)
+		mkdir -p "$state_dir"
+		: >"$poweroff_marker"
+		;;
+	show-start)
+		[ -f "$poweroff_marker" ] || exit 0
+		sync 2>/dev/null || true
+		show_image "$asset_dir/shutdown-start.png"
+		;;
+	show-complete)
+		[ -f "$poweroff_marker" ] || exit 0
+		sync 2>/dev/null || true
+		show_image "$asset_dir/shutdown-complete.png"
+		rm -f "$poweroff_marker"
+		;;
+	clear)
+		rm -f "$poweroff_marker"
+		;;
+	*)
+		echo "Usage: $0 {mark-poweroff|show-start|show-complete|clear}" >&2
+		exit 1
+		;;
+esac

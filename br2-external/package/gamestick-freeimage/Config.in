@@ -1,0 +1,9 @@
+config BR2_PACKAGE_GAMESTICK_FREEIMAGE
+	bool "gamestick-freeimage"
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on !BR2_STATIC_LIBS
+	help
+	  FreeImage library packaged locally for ES-DE.
+
+comment "gamestick-freeimage needs a toolchain with C++ and shared libs"
+	depends on !BR2_INSTALL_LIBSTDCPP || BR2_STATIC_LIBS

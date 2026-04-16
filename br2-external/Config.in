@@ -1,0 +1,15 @@
+menu "Gamestick packages"
+
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-freeimage/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-bios/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-esde/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-games-storage/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-input/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-libudev-zero/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-libretro-cores-r1/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-mali-g52/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-mali-r25p0-wayland-runtime/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-retroarch-assets/Config.in"
+source "$BR2_EXTERNAL_GAMESTICK_PATH/package/gamestick-retroarch/Config.in"
+
+endmenu

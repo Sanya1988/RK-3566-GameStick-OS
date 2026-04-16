@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+for marker in /boot/boot_to_shell /storage/boot_to_shell /storage/.boot_to_shell; do
+	if [ -e "$marker" ]; then
+		exec /bin/sh
+	fi
+done
+
+if [ ! -x /usr/bin/retroarch-kms ]; then
+	exec /bin/sh
+fi
+
+if /usr/bin/retroarch-kms --menu "$@"; then
+	exit 0
+fi
+
+exec /bin/sh

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ruleList>
+    <emulator name="RETROARCH">
+        <rule type="staticpath">
+            <entry>/usr/bin/retroarch-kms</entry>
+        </rule>
+    </emulator>
+    <core name="RETROARCH">
+        <rule type="corepath">
+            <entry>/storage/retroarch/cores</entry>
+        </rule>
+    </core>
+</ruleList>

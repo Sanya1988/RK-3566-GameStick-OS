@@ -1,0 +1,343 @@
+#!/bin/sh
+set -eu
+
+if [ -x /etc/init.d/S41gamestick-storage ]; then
+	/etc/init.d/S41gamestick-storage start >/dev/null 2>&1 || true
+fi
+
+if ! grep -qs ' /storage ' /proc/mounts; then
+	echo "gamestick-esde: /storage is not mounted" >&2
+	exit 1
+fi
+
+base="/storage/esde"
+seed_root="/usr/share/gamestick/esde-seed"
+system_theme_root="/usr/share/es-de/themes"
+shared_system="/storage/system"
+log_dir="$shared_system/logs"
+log_file="$log_dir/esde.log"
+settings_dir="$base/settings"
+custom_systems_dir="$base/custom_systems"
+settings_stamp="$base/.gamestick_settings_seed_v1"
+custom_systems_stamp="$base/.gamestick_custom_systems_v4"
+themes_stamp="$base/.gamestick_themes_v4"
+resources_stamp="$base/.gamestick_resources_v2"
+scripts_stamp="$base/.gamestick_scripts_v1"
+downloaded_media_stamp="$base/.gamestick_downloaded_media_v1"
+screensaver_defaults_stamp="$base/.gamestick_screensaver_defaults_v1"
+dirs_stamp="$base/.gamestick_create_system_dirs_v4"
+
+quit_boot_splash() {
+	if command -v psplash-write >/dev/null 2>&1; then
+		psplash-write "QUIT" >/dev/null 2>&1 || true
+	fi
+}
+
+resolve_locale_name() {
+	preferred=$1
+	preferred=${preferred%%:*}
+	preferred=${preferred%%.*}
+
+	for locale_name in "$preferred" en_US; do
+		[ -n "$locale_name" ] || continue
+		for resources_dir in "$base/resources" "/usr/share/es-de/resources"; do
+			if [ -f "$resources_dir/locale/$locale_name/LC_MESSAGES/$locale_name.mo" ]; then
+				echo "$locale_name"
+				return 0
+			fi
+		done
+	done
+
+	echo "en_US"
+}
+
+configured_application_language() {
+	for settings_file in "$settings_dir/es_settings.xml" "$seed_root/settings/es_settings.xml"; do
+		[ -f "$settings_file" ] || continue
+		configured_language=$(sed -n \
+			's/.*<string name="ApplicationLanguage" value="\([^"]*\)".*/\1/p' \
+			"$settings_file" | tail -n 1)
+		case "$configured_language" in
+			""|automatic)
+				;;
+			*)
+				echo "$configured_language"
+				return 0
+				;;
+		esac
+	done
+
+	for env_language in "${LANGUAGE:-}" "${LC_MESSAGES:-}" "${LANG:-}"; do
+		case "${env_language%%:*}" in
+			""|C|POSIX)
+				;;
+			*)
+				echo "$env_language"
+				return 0
+				;;
+		esac
+	done
+
+	echo "ru_RU"
+}
+
+configured_theme() {
+	for settings_file in "$settings_dir/es_settings.xml" "$seed_root/settings/es_settings.xml"; do
+		[ -f "$settings_file" ] || continue
+		configured_theme_name=$(sed -n \
+			's/.*<string name="Theme" value="\([^"]*\)".*/\1/p' \
+			"$settings_file" | tail -n 1)
+		case "$configured_theme_name" in
+			""|automatic)
+				;;
+			*)
+				echo "$configured_theme_name"
+				return 0
+				;;
+		esac
+	done
+
+	echo "linear-es-de"
+}
+
+theme_supports_locale() {
+	theme_name=$1
+	locale_name=$2
+
+	[ -n "$theme_name" ] || return 1
+	[ -n "$locale_name" ] || return 1
+
+	for theme_root in "$base/themes" "$system_theme_root"; do
+		capabilities_file="$theme_root/$theme_name/capabilities.xml"
+		[ -f "$capabilities_file" ] || continue
+		if ! grep -Eq "<language>[[:space:]]*" "$capabilities_file"; then
+			return 0
+		fi
+		if grep -Eq "<language>[[:space:]]*${locale_name}[[:space:]]*</language>" \
+			"$capabilities_file"; then
+			return 0
+		fi
+		return 1
+	done
+
+	return 1
+}
+
+ensure_setting_line() {
+	settings_file=$1
+	key=$2
+	value=$3
+	type=$4
+	tmp_file=$(mktemp "${settings_file}.XXXXXX")
+
+	awk -v type="$type" -v key="$key" -v value="$value" '
+		index($0, "<" type " name=\"" key "\"") {
+			print "<" type " name=\"" key "\" value=\"" value "\" />"
+			found = 1
+			next
+		}
+		{ print }
+		END {
+			if (!found)
+				print "<" type " name=\"" key "\" value=\"" value "\" />"
+		}
+	' "$settings_file" >"$tmp_file"
+
+	mv "$tmp_file" "$settings_file"
+}
+
+copy_missing_tree() {
+	src=$1
+	dst=$2
+
+	[ -d "$src" ] || return 0
+	mkdir -p "$dst"
+
+	(
+		cd "$src"
+		find . -mindepth 1 -type d | sort
+	) | while IFS= read -r rel_path; do
+		[ -n "$rel_path" ] || continue
+		mkdir -p "$dst/${rel_path#./}"
+	done
+
+	(
+		cd "$src"
+		find . -mindepth 1 -type f | sort
+	) | while IFS= read -r rel_path; do
+		[ -n "$rel_path" ] || continue
+		target_path="$dst/${rel_path#./}"
+		[ -e "$target_path" ] || cp -f "$src/${rel_path#./}" "$target_path"
+	done
+}
+
+mkdir -p \
+	"$base" \
+	"$settings_dir" \
+	"$custom_systems_dir" \
+	"$base/gamelists" \
+	"$base/scripts" \
+	"$base/themes" \
+	"$base/logs" \
+	"$base/downloaded_media" \
+	"$shared_system" \
+	"$log_dir" \
+	"/storage/music"
+
+export HOME="/storage"
+export ESDE_APPDATA_DIR="$base"
+export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-kmsdrm}"
+export SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-alsa}"
+export AUDIODEV="${AUDIODEV:-default}"
+export SDL_VIDEO_GL_DRIVER="${SDL_VIDEO_GL_DRIVER:-/usr/lib/libmali.so.1}"
+export SDL_VIDEO_EGL_DRIVER="${SDL_VIDEO_EGL_DRIVER:-/usr/lib/libmali.so.1}"
+
+sync_bundled_theme() {
+	theme_name=$1
+	src="$system_theme_root/$theme_name"
+	dst="$base/themes/$theme_name"
+
+	[ -d "$src" ] || return 0
+	rm -rf "$dst"
+	cp -R "$src" "$dst"
+}
+
+sync_seed_theme() {
+	src=$1
+	dst="$base/themes/$(basename "$src")"
+
+	[ -d "$src" ] || return 0
+	rm -rf "$dst"
+	cp -R "$src" "$dst"
+}
+
+sync_seed_theme_docs() {
+	[ -d "$seed_root/themes" ] || return 0
+
+	find "$seed_root/themes" -mindepth 1 -maxdepth 1 -type f -name '*.txt' | sort | \
+	while IFS= read -r doc_file; do
+		cp -f "$doc_file" "$base/themes/$(basename "$doc_file")"
+	done
+}
+
+cleanup_removed_system_artifacts() {
+	rm -rf \
+		"$base/gamelists/nds" \
+		"$base/downloaded_media/nds" \
+		"$base/gamelists/naomi" \
+		"$base/downloaded_media/naomi"
+}
+
+if [ ! -f "$settings_stamp" ] || [ ! -f "$settings_dir/es_settings.xml" ]; then
+	if [ -f "$seed_root/settings/es_settings.xml" ] && [ ! -f "$settings_dir/es_settings.xml" ]; then
+		cp -f "$seed_root/settings/es_settings.xml" "$settings_dir/es_settings.xml"
+	fi
+	: >"$settings_stamp"
+fi
+
+resolved_locale="$(resolve_locale_name "$(configured_application_language)")"
+selected_theme="$(configured_theme)"
+if ! theme_supports_locale "$selected_theme" "$resolved_locale"; then
+	selected_theme="linear-es-de"
+fi
+ensure_setting_line "$settings_dir/es_settings.xml" "ApplicationLanguage" "$resolved_locale" string
+ensure_setting_line "$settings_dir/es_settings.xml" "Theme" "$selected_theme" string
+ensure_setting_line "$settings_dir/es_settings.xml" "ThemeLanguage" "$resolved_locale" string
+ensure_setting_line "$settings_dir/es_settings.xml" "NavigationSounds" "true" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "BackgroundMusic" "true" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "CustomEventScripts" "true" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "ViewsVideoAudio" "false" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "MediaViewerVideoAudio" "false" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverVideoAudio" "false" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "ShowQuitMenu" "true" bool
+ensure_setting_line "$settings_dir/es_settings.xml" "SoundVolumeNavigation" "100" int
+ensure_setting_line "$settings_dir/es_settings.xml" "SoundVolumeBackgroundMusic" "60" int
+ensure_setting_line "$settings_dir/es_settings.xml" "SoundVolumeVideos" "0" int
+ensure_setting_line "$settings_dir/es_settings.xml" "BackgroundMusicDirectory" "/storage/music" string
+ensure_setting_line "$settings_dir/es_settings.xml" "LegacyGamelistFileLocation" "true" bool
+
+if [ ! -f "$screensaver_defaults_stamp" ]; then
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverTimer" "300000" int
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverType" "slideshow" string
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverSlideshowCustomImages" "true" bool
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverSlideshowGameInfo" "false" bool
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverSlideshowRecurse" "false" bool
+	ensure_setting_line "$settings_dir/es_settings.xml" "ScreensaverSlideshowCustomDir" "/storage/screensaver" string
+	: >"$screensaver_defaults_stamp"
+fi
+
+export LANGUAGE="${resolved_locale}:en_US"
+export LANG="${resolved_locale}.UTF-8"
+export LC_MESSAGES="${resolved_locale}.UTF-8"
+unset LC_ALL
+
+if [ ! -f "$custom_systems_stamp" ] || \
+	[ ! -f "$custom_systems_dir/es_find_rules.xml" ] || \
+	[ ! -f "$custom_systems_dir/es_systems.xml" ]; then
+	for file in es_find_rules.xml es_systems.xml; do
+		src="$seed_root/custom_systems/$file"
+		dst="$custom_systems_dir/$file"
+		if [ -f "$src" ]; then
+			cp -f "$src" "$dst"
+		fi
+	done
+	: >"$custom_systems_stamp"
+fi
+
+if [ ! -f "$resources_stamp" ] && [ -d "$seed_root/resources" ]; then
+	mkdir -p "$base/resources"
+	cp -R "$seed_root/resources/." "$base/resources/"
+	: >"$resources_stamp"
+fi
+
+if [ ! -f "$scripts_stamp" ] || \
+	[ ! -f "$base/scripts/poweroff/10-gamestick-poweroff-marker.sh" ]; then
+	if [ -d "$seed_root/scripts" ]; then
+		mkdir -p "$base/scripts"
+		cp -R "$seed_root/scripts/." "$base/scripts/"
+		find "$base/scripts" -type f -name '*.sh' -exec chmod 0755 {} +
+		: >"$scripts_stamp"
+	fi
+fi
+
+if [ ! -f "$downloaded_media_stamp" ]; then
+	if [ -d "$seed_root/downloaded_media" ]; then
+		copy_missing_tree "$seed_root/downloaded_media" "$base/downloaded_media"
+		: >"$downloaded_media_stamp"
+	fi
+fi
+
+if [ ! -f "$themes_stamp" ] || \
+	[ ! -d "$base/themes/linear-es-de" ] || \
+	[ ! -d "$base/themes/modern-es-de" ] || \
+	[ ! -d "$base/themes/slate-es-de" ] || \
+	[ ! -f "$base/themes/README.txt" ]; then
+	for theme_name in linear-es-de modern-es-de slate-es-de; do
+		sync_bundled_theme "$theme_name"
+	done
+	if [ -d "$seed_root/themes" ]; then
+		find "$seed_root/themes" -mindepth 1 -maxdepth 1 -type d | sort | \
+		while IFS= read -r theme_dir; do
+			sync_seed_theme "$theme_dir"
+		done
+		sync_seed_theme_docs
+	fi
+	: >"$themes_stamp"
+fi
+
+cleanup_removed_system_artifacts
+
+: >"$log_file"
+
+if [ ! -f "$dirs_stamp" ]; then
+	if /usr/bin/es-de --create-system-dirs >>"$log_file" 2>&1; then
+		: >"$dirs_stamp"
+	else
+		echo "gamestick-esde: failed to create system directories" >&2
+		tail -n 120 "$log_file" >&2 || true
+		exit 1
+	fi
+fi
+
+quit_boot_splash
+exec /usr/bin/es-de "$@" >>"$log_file" 2>&1

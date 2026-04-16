@@ -1,0 +1,15 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		if [ -x /usr/bin/gamestick-userdata-firstboot ]; then
+			/usr/bin/gamestick-userdata-firstboot start
+		fi
+		;;
+	stop|restart)
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}" >&2
+		exit 1
+		;;
+esac

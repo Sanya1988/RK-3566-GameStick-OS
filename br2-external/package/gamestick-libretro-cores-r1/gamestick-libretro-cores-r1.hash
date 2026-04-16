@@ -1,0 +1,6 @@
+# Locally calculated for:
+# https://github.com/libretro/libretro-super/archive/60f5c62789af16379446544d64228afa1d6b28b7.tar.gz
+sha256  08beb1774cb2e0037f0955d38ad2e510f2ad21e2607d688a30a5efc3bc8af027  gamestick-libretro-cores-r1-60f5c62789af16379446544d64228afa1d6b28b7.tar.gz
+
+# From COPYING in libretro-super at the pinned commit.
+sha256  494319687ac783d065a9ca3665b4537694154b0bf7517140b98e24848b8c2b2d  COPYING

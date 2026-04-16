@@ -1,0 +1,5 @@
+BR2_PACKAGE_GAMESTICK_GAMES_STORAGE=y
+BR2_PACKAGE_GAMESTICK_RETROARCH=y
+# The vendor Rockchip kernel already has the Mali driver enabled in-tree.
+# Do not force the broken external Buildroot mali-driver package.
+# BR2_PACKAGE_MALI_DRIVER is not set

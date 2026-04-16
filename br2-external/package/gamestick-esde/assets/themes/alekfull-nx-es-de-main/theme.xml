@@ -1,0 +1,445 @@
+<!--
+theme name:             Alekfull-NX-Revamp (ES-DE Edition)
+created by:             fagnerpc
+ported from:            https://github.com/fagnerpc/Alekfull-NX
+ported by:              anthonycaccese (change log can be found at https://github.com/anthonycaccese/alekfull-nx-revamp-es-de/)
+license:                Attribution-NonCommercial-ShareAlike 2.0 (CC-BY-NC-SA)
+16:9 resolution:        based on 3840x2160
+16:10 resolution:       based on 3840x2400
+-->
+
+<theme>
+
+   <!--
+   ///
+   Global Variables
+   ///
+   -->
+   <variables>
+      <fontRegular>./_inc/fonts/Oxygen-Regular.ttf</fontRegular>
+      <fontBold>./_inc/fonts/Gilroy-Bold.ttf</fontBold>
+      <fontLogo>./_inc/fonts/ChangaOne-Italic.ttf</fontLogo>
+      <spacerImage>./_inc/images/space.png</spacerImage>
+   </variables>
+   <include>./colors.xml</include>
+
+   <!--
+   ///
+   All Views: Defaults
+   ///
+   -->
+   <view name="system,gamelist">
+      <!-- Start: menu styling resets -->
+      <clock name="clock-menu-view">
+         <scope>menu</scope>
+         <origin>0 0</origin>
+         <pos>0.0075 0.01</pos>
+         <backgroundColor>222222</backgroundColor>
+         <color>cccccc</color>
+         <backgroundHorizontalPadding>0.02 0.01</backgroundHorizontalPadding>
+         <backgroundVerticalPadding>0.02 0.01</backgroundVerticalPadding>
+         <backgroundCornerRadius>0.005</backgroundCornerRadius>
+      </clock>
+      <systemstatus name="system-status-menu-view">
+         <scope>menu</scope>
+         <origin>1 0</origin>
+         <pos>0.99 0.01</pos>
+         <backgroundColor>222222</backgroundColor>
+         <color>cccccc</color>
+         <backgroundHorizontalPadding>0.0075 0.02</backgroundHorizontalPadding>
+         <backgroundVerticalPadding>0.02 0.01</backgroundVerticalPadding>
+         <backgroundCornerRadius>0.005</backgroundCornerRadius>
+      </systemstatus>
+      <helpsystem name="help-menu-view">
+         <scope>menu</scope>
+         <origin>0.5 1</origin>
+         <pos>0.5 0.9875</pos>
+         <iconColor>cccccc</iconColor>
+         <textColor>cccccc</textColor>
+         <backgroundColor>222222</backgroundColor>
+         <backgroundHorizontalPadding>0.01 0.01</backgroundHorizontalPadding>
+         <backgroundVerticalPadding>0.015 0.02</backgroundVerticalPadding>
+         <backgroundCornerRadius>0.005</backgroundCornerRadius>
+         <entryRelativeScale>0.9</entryRelativeScale>
+      </helpsystem>
+      <!-- End: menu styling resets -->
+      <image name="background">
+         <origin>0 0</origin>
+         <pos>0 0</pos>
+         <size>1 1</size>
+         <tile>true</tile>
+         <path>${spacerImage}</path>
+         <color>${backgroundColor}</color>
+         <zIndex>0</zIndex>
+      </image>
+      <image name="background-art">
+         <origin>0 0</origin>
+         <pos>0 0</pos>
+         <size>1 0</size>
+         <path>${backgroundArtPath}</path>
+         <default>${backgroundArtDefaultImage}</default>
+         <interpolation>linear</interpolation>
+         <zIndex>1</zIndex>
+      </image>
+      <image name="background-art-mask">
+         <origin>0 1</origin>
+         <pos>0 1</pos>
+         <size>1 0.1</size>
+         <tile>true</tile>
+         <path>${spacerImage}</path>
+         <color>${backgroundColor}</color>
+         <zIndex>2</zIndex>
+      </image>
+      <image name="background-art-gradient">
+         <origin>0 0</origin>
+         <path>./_inc/images/${backgroundArtGradientImage}</path>
+         <zIndex>3</zIndex>
+      </image>
+      <clock name="clock">
+         <scope>view</scope>
+         <opacity>0</opacity>
+      </clock>
+      <systemstatus name="
+         system-status
+         ">
+         <scope>view</scope>
+         <origin>1 0</origin>
+         <pos>0.9925 0.009</pos>
+         <backgroundHorizontalPadding>0.0075 0.0075</backgroundHorizontalPadding>
+         <backgroundVerticalPadding>0.01 0.01</backgroundVerticalPadding>
+         <textRelativeScale>0.75</textRelativeScale>
+         <color>${systemStatusColor}</color>
+         <backgroundColor>${systemStatusBackgroundColor}</backgroundColor>
+         <customIcon icon="icon_bluetooth">./_inc/images/icon-bluetooth.svg</customIcon>
+         <customIcon icon="icon_wifi">./_inc/images/icon-wifi.svg</customIcon>
+         <customIcon icon="icon_cellular">./_inc/images/icon-cellular.svg</customIcon>
+         <customIcon icon="icon_battery_charging">./_inc/images/icon-battery-charging.svg</customIcon>
+         <customIcon icon="icon_battery_full">./_inc/images/icon-battery-full.svg</customIcon>
+         <customIcon icon="icon_battery_high">./_inc/images/icon-battery-high.svg</customIcon>
+         <customIcon icon="icon_battery_medium">./_inc/images/icon-battery-medium.svg</customIcon>
+         <customIcon icon="icon_battery_low">./_inc/images/icon-battery-low.svg</customIcon>
+      </systemstatus>
+      <helpsystem name="help-system-view,help-gamelist-view">
+         <fontPath>${fontBold}</fontPath>
+         <textColor>${helpTextColor}</textColor>
+         <iconColor>${helpIconColor}</iconColor>
+      </helpsystem>
+   </view>
+
+   <!--
+   ///
+   System View: Defaults
+   ///
+   -->
+   <view name="system">
+      <image name="system-carousel-selector-shadow">
+         <origin>0.5 0.5</origin>
+         <path>./_inc/images/system-carousel-selector-shadow.png</path>
+         <zIndex>9</zIndex>
+      </image>
+      <carousel name="system-carousel">
+         <origin>0 0.5</origin>
+         <color>00000000</color>
+         <itemScale>1.15</itemScale>
+         <maxItemCount>5.5</maxItemCount>
+         <unfocusedItemOpacity>0.8</unfocusedItemOpacity>
+         <horizontalOffset>-0.27265625</horizontalOffset>
+         <staticImage>${systemCarouselArtPath}</staticImage>
+         <imageCornerRadius>0.005</imageCornerRadius>
+         <text>${system.fullName}</text>
+         <textColor>${systemCarouselTextColor}</textColor>
+         <textBackgroundColor>${systemCarouselTextBackgroundColor}</textBackgroundColor>
+         <textRelativeScale>0.8</textRelativeScale>
+         <lineSpacing>1.2</lineSpacing>
+         <fontPath>${fontBold}</fontPath>
+         <letterCase>uppercase</letterCase>
+         <fastScrolling>true</fastScrolling>
+         <zIndex>10</zIndex>
+      </carousel>
+      <image name="system-carousel-selector">
+         <origin>0.5 0.5</origin>
+         <path>./_inc/images/system-carousel-selector.svg</path>
+         <color>${systemCarouselSelectorColor}</color>
+         <zIndex>11</zIndex>
+      </image>
+      <text name="system-info">
+         <origin>0.5 1</origin>
+         <systemdata>gamecount</systemdata>
+         <fontPath>${fontBold}</fontPath>
+         <lineSpacing>1</lineSpacing>
+         <letterCase>uppercase</letterCase>
+         <horizontalAlignment>center</horizontalAlignment>
+         <color>${systemInfoColor}</color>
+      </text>
+   </view>
+
+   <!--
+   ///
+   Gamelist View: Defaults
+   ///
+   -->
+   <view name="gamelist">
+      <image name="background-art">
+         <opacity>${gamelistBackgroundOpacity}</opacity>
+      </image>
+      <image name="game-list-background-shadow">
+         <origin>0.5 0.5</origin>
+      </image>
+      <textlist name="game-list">
+         <fontPath>${fontBold}</fontPath>
+         <selectorColor>${gamelistSelectorColor}</selectorColor>
+         <selectedColor>${gamelistSelectedColor}</selectedColor>
+         <primaryColor>${gamelistPrimaryColor}</primaryColor>
+         <secondaryColor>${gamelistSecondaryColor}</secondaryColor>
+         <horizontalMargin>0.008333333333333</horizontalMargin>
+         <systemNameSuffix>false</systemNameSuffix>
+      </textlist>
+      <image name="system-logo">
+         <origin>0 0.5</origin>
+         <path>./_inc/systems/logos/${system.theme}.svg</path>
+         <color>${gamelistLogoColor}</color>
+      </image>
+      <text name="custom-collection-name">
+         <fontPath>${fontLogo}</fontPath>
+      </text>
+   </view>
+
+   <!--
+   ///
+   Gamelist View: Variant Defautls
+   ///
+   -->
+   <variant name="
+      gamelist-metadata-off-miximage,
+      gamelist-metadata-off-boxart,
+      gamelist-metadata-on-miximage,
+      gamelist-metadata-on-boxart
+      ">
+      <view name="gamelist">
+         <video name="game-media">
+            <origin>0.5 0.5</origin>
+            <delay>3</delay>
+            <videoCornerRadius>0.005</videoCornerRadius>
+            <pillarboxes>false</pillarboxes>
+            <iterationCount>1</iterationCount>
+            <onIterationsDone>image</onIterationsDone>
+         </video>
+      </view>
+   </variant>
+   <variant name="
+      gamelist-metadata-off-miximage,
+      gamelist-metadata-on-miximage
+      ">
+      <view name="gamelist">
+         <video name="game-media">
+         <imageType>miximage,cover</imageType>
+         </video>
+      </view>
+   </variant>
+   <variant name="
+      gamelist-metadata-off-boxart,
+      gamelist-metadata-on-boxart
+      ">
+      <view name="gamelist">
+         <video name="game-media">
+            <imageType>cover,miximage</imageType>
+            <imageCornerRadius>0.005</imageCornerRadius>
+         </video>
+      </view>
+   </variant>
+
+   <!--
+   ///
+   Gamelist View: Metadata-On Variant
+   ///
+   -->
+   <variant name="
+      gamelist-metadata-on-miximage,
+      gamelist-metadata-on-boxart
+      ">
+      <view name="gamelist">
+         <!-- Start: Extended Metadata -->
+         <image name="game-metadata-background-shadow-extended">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/gamelist-metadata-background-shadow-extended.png</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <image name="game-metadata-background-image-extended">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/${gamelistMetadataBackgroundImage}-extended.svg</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <rating name="game-rating-extended">
+            <origin>0.5 0.5</origin>
+            <filledPath>./_inc/images/icon-star-filled.svg</filledPath>
+            <unfilledPath>./_inc/images/icon-star-unfilled.svg</unfilledPath>
+            <color>${gameMetadataColor}</color>
+         </rating>
+         <datetime name="game-releasedate-extended,game-lastplayed-extended">
+            <origin>0 0.5</origin>
+            <fontPath>${fontBold}</fontPath>
+            <color>${gameMetadataColor}</color>
+            <lineSpacing>1</lineSpacing>
+         </datetime>
+         <text name="game-players-extended,game-genre-extended,game-developer-extended,game-publisher-extended,game-playcount-extended">
+            <origin>0 0.5</origin>
+            <fontPath>${fontBold}</fontPath>
+            <color>${gameMetadataColor}</color>
+            <lineSpacing>1</lineSpacing>
+            <defaultValue>Unknown</defaultValue>
+         </text>
+         <datetime name="game-releasedate-extended">
+            <metadata>releasedate</metadata>
+            <defaultValue>Unknown</defaultValue>
+         </datetime>
+         <text name="game-players-extended">
+            <metadata>players</metadata>
+         </text>
+         <text name="game-genre-extended">
+            <metadata>genre</metadata>
+            <letterCase>capitalize</letterCase>
+         </text>
+         <text name="game-developer-extended">
+            <metadata>developer</metadata>
+         </text>
+         <text name="game-publisher-extended">
+            <metadata>publisher</metadata>
+         </text>
+         <datetime name="game-lastplayed-extended">
+            <metadata>lastplayed</metadata>
+            <defaultValue>Never</defaultValue>
+         </datetime>
+         <text name="game-playcount-extended">
+            <metadata>playcount</metadata>
+         </text>
+         <!-- End: Extended Metadata -->
+         <!-- Start: Base Metadata -->
+         <image name="game-metadata-background-shadow-base">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/gamelist-metadata-background-shadow-base.png</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <image name="game-metadata-background-image-base">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/${gamelistMetadataBackgroundImage}-base.svg</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <rating name="game-rating-base">
+            <origin>0.5 0.5</origin>
+            <filledPath>./_inc/images/icon-star-filled.svg</filledPath>
+            <unfilledPath>./_inc/images/icon-star-unfilled.svg</unfilledPath>
+            <color>${gameMetadataColor}</color>
+            <overlay>false</overlay>
+         </rating>
+         <datetime name="game-releasedate-base">
+            <origin>0 0.5</origin>
+            <fontPath>${fontBold}</fontPath>
+            <color>${gameMetadataColor}</color>
+            <lineSpacing>1</lineSpacing>
+            <metadata>releasedate</metadata>
+            <defaultValue>Unknown</defaultValue>
+            <horizontalAlignment>center</horizontalAlignment>
+            <format>%Y-%m</format>
+         </datetime>
+         <text name="game-genre-base">
+            <origin>0 0.5</origin>
+            <fontPath>${fontBold}</fontPath>
+            <color>${gameMetadataColor}</color>
+            <lineSpacing>1</lineSpacing>
+            <defaultValue>Unknown</defaultValue>
+            <metadata>genre</metadata>
+            <container>true</container>
+            <containerType>horizontal</containerType>
+            <horizontalAlignment>center</horizontalAlignment>
+            <letterCase>capitalize</letterCase>
+         </text>
+         <!-- End: Base Metadata -->
+         <!-- Start: Min Metadata -->
+         <image name="game-metadata-background-shadow-min">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/gamelist-metadata-background-shadow-min.png</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <image name="game-metadata-background-image-min">
+            <origin>0.5 0.5</origin>
+            <path>./_inc/images/${gamelistMetadataBackgroundImage}-min.svg</path>
+            <metadataElement>true</metadataElement>
+         </image>
+         <rating name="game-rating-min">
+            <origin>0.5 0.5</origin>
+            <filledPath>./_inc/images/icon-star-filled.svg</filledPath>
+            <unfilledPath>./_inc/images/icon-star-unfilled.svg</unfilledPath>
+            <color>${gameMetadataColor}</color>
+            <overlay>false</overlay>
+         </rating>
+         <datetime name="game-releasedate-min">
+            <origin>0 0.5</origin>
+            <fontPath>${fontBold}</fontPath>
+            <color>${gameMetadataColor}</color>
+            <lineSpacing>1</lineSpacing>
+            <metadata>releasedate</metadata>
+            <defaultValue>Unknown</defaultValue>
+            <horizontalAlignment>center</horizontalAlignment>
+            <format>%Y-%m</format>
+         </datetime>
+         <!-- End: Min Metadata -->
+         <text name="game-description">
+            <origin>0.5 1</origin>
+            <fontPath>${fontRegular}</fontPath>
+            <container>true</container>
+            <metadata>description</metadata>
+            <color>${gameDescriptionColor}</color>
+            <containerStartDelay>8</containerStartDelay>
+            <containerScrollSpeed>0.6</containerScrollSpeed>
+         </text>
+      </view>
+   </variant>
+
+   <!--
+   ///
+   Aspect Ratios
+   ///
+   -->
+   <aspectRatio name="16:9">
+      <include>./aspect-ratio-16-9.xml</include>
+   </aspectRatio>
+   <aspectRatio name="16:10">
+      <include>./aspect-ratio-16-10.xml</include>
+   </aspectRatio>
+   <aspectRatio name="4:3">
+      <include>./aspect-ratio-4-3.xml</include>
+   </aspectRatio>
+   <aspectRatio name="19.5:9">
+      <include>./aspect-ratio-19_5-9.xml</include>
+   </aspectRatio>
+
+   <!--
+   ///
+   Sounds
+   ///
+   -->
+   <view name="all">
+      <sound name="systembrowse">
+         <path>./_inc/sounds/systembrowse.wav</path>
+      </sound>
+      <sound name="quicksysselect">
+         <path>./_inc/sounds/quicksysselect.wav</path>
+      </sound>
+      <sound name="select">
+         <path>./_inc/sounds/select.wav</path>
+      </sound>
+      <sound name="back">
+         <path>./_inc/sounds/back.wav</path>
+      </sound>
+      <sound name="scroll">
+         <path>./_inc/sounds/scroll.wav</path>
+      </sound>
+      <sound name="favorite">
+         <path>./_inc/sounds/favorite.wav</path>
+      </sound>
+      <sound name="launch">
+         <path>./_inc/sounds/launch.wav</path>
+      </sound>
+   </view>
+	
+</theme>

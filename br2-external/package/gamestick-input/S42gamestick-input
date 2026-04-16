@@ -1,0 +1,32 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+PIDFILE=/run/gamestick-input/monitor.pid
+REFRESH=/usr/bin/gamestick-input-refresh
+
+case "$1" in
+	start)
+		[ -x "$REFRESH" ] || exit 0
+		mkdir -p /run/gamestick-input
+		"$REFRESH" --once >/dev/null 2>&1 || true
+		if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" >/dev/null 2>&1; then
+			exit 0
+		fi
+		"$REFRESH" --monitor >/dev/null 2>&1 &
+		echo $! >"$PIDFILE"
+		;;
+	stop)
+		if [ -f "$PIDFILE" ]; then
+			kill "$(cat "$PIDFILE")" >/dev/null 2>&1 || true
+			rm -f "$PIDFILE"
+		fi
+		;;
+	restart)
+		"$0" stop
+		"$0" start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}" >&2
+		exit 1
+		;;
+esac

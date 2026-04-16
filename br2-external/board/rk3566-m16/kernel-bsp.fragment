@@ -1,0 +1,135 @@
+# Minimal BSP fragment for rockchip-linux/kernel develop-5.10.
+# Keep this conservative to reduce chances of vendor-driver build breakage.
+# CONFIG_WERROR is not set
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+CONFIG_SERIAL_8250_DW=y
+CONFIG_SERIAL_OF_PLATFORM=y
+CONFIG_MMC=y
+CONFIG_MMC_BLOCK=y
+CONFIG_MMC_DW=y
+CONFIG_MMC_DW_ROCKCHIP=y
+CONFIG_MMC_SDHCI=y
+CONFIG_MMC_SDHCI_PLTFM=y
+CONFIG_MMC_SDHCI_OF_DWCMSHC=y
+CONFIG_EFI_PARTITION=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_FIXED_VOLTAGE=y
+CONFIG_EXT4_FS=y
+CONFIG_VT=y
+CONFIG_VT_CONSOLE=y
+CONFIG_FRAMEBUFFER_CONSOLE=y
+
+# Board boots from SD, and onboard Wi-Fi is not used yet.
+# Disable vendor Rockchip WLAN stack to avoid Broadcom BCMDHD build failures.
+# CONFIG_WL_ROCKCHIP is not set
+# CONFIG_BCMDHD is not set
+# CONFIG_BRCMFMAC is not set
+
+# fix hang at init_cryptodev
+# CONFIG_CRYPTO_DEV_ROCKCHIP is not set
+# CONFIG_CRYPTO_DEV_ROCKCHIP_V1 is not set
+# CONFIG_CRYPTO_DEV_ROCKCHIP_V2 is not set
+
+# --- Boot fix: kernel hangs in rockchip_sound_driver_init ---
+# CONFIG_SND_SOC_ROCKCHIP_MULTICODECS is not set
+# CONFIG_SND_SOC_ROCKCHIP_RT5645 is not set
+# CONFIG_SND_SIMPLE_CARD is not set
+# CONFIG_SND_SIMPLE_CARD_UTILS is not set
+
+# Also disable RT56xx codecs (DT references them)
+# CONFIG_SND_SOC_RT5616 is not set
+# CONFIG_SND_SOC_RT5640 is not set
+# CONFIG_SND_SOC_RT5645 is not set
+# CONFIG_SND_SOC_RT5651 is not set
+# CONFIG_SND_USB_AUDIO is not set
+
+# Recommended for future debugging
+CONFIG_INITCALL_BLACKLIST=y
+CONFIG_PSTORE=y
+CONFIG_PSTORE_CONSOLE=y
+CONFIG_PSTORE_PMSG=y
+CONFIG_PSTORE_RAM=y
+# CONFIG_TEE is not set
+# CONFIG_OPTEE is not set
+
+# Temporary boot-min profile for early userspace bring-up.
+# Goal: reach init=/bin/sh with a clean kernel instead of stacking initcall_blacklist.
+# Re-enable these subsystems step by step after userspace is confirmed stable.
+# CONFIG_HID is not set
+# CONFIG_SOUND is not set
+# CONFIG_IIO is not set
+# CONFIG_BT is not set
+# CONFIG_CFG80211 is not set
+# CONFIG_RFKILL is not set
+# CONFIG_IPV6 is not set
+# CONFIG_MEDIA_SUPPORT is not set
+# CONFIG_VIDEO_ROCKCHIP_RGA is not set
+# CONFIG_ROCKCHIP_VENDOR_STORAGE is not set
+# CONFIG_PHY_ROCKCHIP_SAMSUNG_DCPHY is not set
+# CONFIG_RK_HEADSET is not set
+# CONFIG_HIDRAW is not set
+# CONFIG_UHID is not set
+# CONFIG_HID_BATTERY_STRENGTH is not set
+# CONFIG_HID_GENERIC is not set
+# CONFIG_HID_KENSINGTON is not set
+# CONFIG_HID_MULTITOUCH is not set
+# CONFIG_USB_HID is not set
+# CONFIG_USB_HIDDEV is not set
+# CONFIG_I2C_HID is not set
+# CONFIG_CPU_IDLE is not set
+# CONFIG_PM_DEBUG is not set
+# CONFIG_PM_ADVANCED_DEBUG is not set
+# CONFIG_PM_SLEEP_DEBUG is not set
+# CONFIG_MTD_UBI is not set
+# CONFIG_UBIFS_FS is not set
+# CONFIG_ROCKCHIP_MULTI_RGA is not set
+# CONFIG_ROCKCHIP_RKNPU is not set
+# CONFIG_GPIO_KEYS is not set
+
+# Minimal USB keyboard bring-up after confirming init=/bin/sh works.
+CONFIG_HID=y
+CONFIG_HID_GENERIC=y
+CONFIG_USB_HID=y
+
+# Next restore step after validating the keyboard-only baseline: wired gamepads.
+# Keep network and sound stacks off so this remains a minimal input-only delta.
+CONFIG_INPUT_JOYDEV=y
+CONFIG_INPUT_JOYSTICK=y
+CONFIG_HIDRAW=y
+CONFIG_LEDS_CLASS_MULTICOLOR=y
+CONFIG_JOYSTICK_XPAD=y
+CONFIG_JOYSTICK_XPAD_FF=y
+CONFIG_HID_DRAGONRISE=y
+CONFIG_HID_NINTENDO=y
+CONFIG_HID_PLAYSTATION=y
+CONFIG_HID_SONY=y
+# CONFIG_PLAYSTATION_FF is not set
+# CONFIG_SONY_FF is not set
+
+# Next restore step after wired gamepad validation: HDMI audio only.
+# Keep BT/Wi-Fi and the broader analog/simple-card/USB-audio paths disabled.
+CONFIG_SOUND=y
+CONFIG_SND=y
+CONFIG_SND_PCM=y
+CONFIG_SND_JACK=y
+CONFIG_SND_SOC=y
+CONFIG_SND_SOC_ROCKCHIP=y
+CONFIG_SND_SOC_ROCKCHIP_I2S_TDM=y
+CONFIG_SND_SOC_ROCKCHIP_HDMI=y
+CONFIG_DRM_DW_HDMI_I2S_AUDIO=y
+
+# RK3566 uses a Mali G31 (Bifrost) GPU. Keep only the matching kernel driver
+# path to avoid probing unrelated Mali400/Midgard stacks and missing /dev/maliX.
+# CONFIG_MALI400 is not set
+# CONFIG_MALI450 is not set
+# CONFIG_MALI_MIDGARD is not set
+CONFIG_MALI_BIFROST=y
+CONFIG_MALI_PLATFORM_NAME="rk"
+CONFIG_MALI_REAL_HW=y
+CONFIG_MALI_BIFROST_DEVFREQ=y
+# CONFIG_MALI_BIFROST_GATOR_SUPPORT is not set
+# CONFIG_MALI_BIFROST_ENABLE_TRACE is not set
+# CONFIG_MALI_BIFROST_EXPERT is not set

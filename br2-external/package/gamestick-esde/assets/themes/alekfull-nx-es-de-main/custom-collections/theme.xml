@@ -1,0 +1,45 @@
+<theme>
+   <include>./../theme.xml</include>
+   <view name="gamelist">
+      <text name="custom-collection-name">
+         <origin>0.5 0</origin>
+         <metadata>systemFullname</metadata>
+         <color>${gamelistLogoColor}</color>
+         <letterCase>uppercase</letterCase>
+         <horizontalAlignment>center</horizontalAlignment>
+         <lineSpacing>1</lineSpacing>
+         <visible>${displayCustomCollectionName}</visible>
+      </text>
+   </view>
+   <aspectRatio name="16:9">
+      <view name="gamelist">
+         <text name="custom-collection-name">
+            <pos>0.119791666666667 0.935185185185185</pos><!-- 460 2020 -->
+            <fontSize>0.019444444444444</fontSize><!-- 42 -->
+         </text>
+      </view>
+   </aspectRatio>
+   <aspectRatio name="16:10">
+      <view name="gamelist">
+         <text name="custom-collection-name">
+            <pos>0.119791666666667 0.925</pos><!-- 460 2220 -->
+            <fontSize>0.0175</fontSize><!-- 42 -->
+         </text>
+      </view>
+   </aspectRatio>
+   <fontSize name="medium">
+      <variables>
+         <displayCustomCollectionName>true</displayCustomCollectionName>
+      </variables>
+   </fontSize>
+   <fontSize name="large">
+      <variables>
+         <displayCustomCollectionName>false</displayCustomCollectionName>
+      </variables>
+   </fontSize>
+   <fontSize name="x-large">
+      <variables>
+         <displayCustomCollectionName>false</displayCustomCollectionName>
+      </variables>
+   </fontSize>
+</theme>

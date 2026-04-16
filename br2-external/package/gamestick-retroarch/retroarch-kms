@@ -1,0 +1,485 @@
+#!/bin/sh
+set -eu
+
+if [ -x /etc/init.d/S41gamestick-storage ]; then
+	/etc/init.d/S41gamestick-storage start >/dev/null 2>&1 || true
+fi
+
+base="/storage/retroarch"
+shared_system="/storage/system"
+shared_bios="/storage/bios"
+seed_root="/usr/share/gamestick/retroarch-seed"
+defaults_root="/usr/share/gamestick/retroarch-defaults"
+log_dir="$shared_system/logs"
+log_file="$log_dir/retroarch.log"
+
+if ! grep -qs ' /storage ' /proc/mounts; then
+	echo "retroarch-kms: /storage is not mounted" >&2
+	exit 1
+fi
+
+mkdir -p \
+	"$base/home" \
+	"$base/config" \
+	"$base/cache" \
+	"$base/cache/tmp" \
+	"$base/share" \
+	"$base/cores" \
+	"$base/info" \
+	"$base/database/rdb" \
+	"$base/cheats" \
+	"$base/filters/video" \
+	"$base/filters/audio" \
+	"$base/shaders" \
+	"$base/overlays" \
+	"$base/autoconfig" \
+	"$base/playlists" \
+	"$base/thumbnails" \
+	"$base/remaps" \
+	"$base/saves" \
+	"$base/states" \
+	"$base/screenshots" \
+	"$base/system"
+mkdir -p "$shared_system"
+mkdir -p "$shared_bios"
+mkdir -p "$log_dir"
+
+export HOME="$base/home"
+export XDG_CONFIG_HOME="$base/config"
+export XDG_CACHE_HOME="$base/cache"
+export XDG_DATA_HOME="$base/share"
+export TMPDIR="$base/cache/tmp"
+
+cfg_dir="$XDG_CONFIG_HOME/retroarch"
+cfg="$cfg_dir/retroarch.cfg"
+input_migration_stamp="$cfg_dir/.gamestick_input_autoconfig_v2"
+content_seed_stamp="$cfg_dir/.gamestick_userdata_seed_v5"
+gamestick_cfg_dir="$cfg_dir/gamestick"
+gamestick_override_dir="$gamestick_cfg_dir/overrides"
+mkdir -p "$cfg_dir"
+mkdir -p \
+	"$gamestick_override_dir/systems" \
+	"$gamestick_override_dir/cores" \
+	"$gamestick_override_dir/games"
+
+if [ ! -f "$cfg" ] && [ -f /etc/retroarch.cfg ]; then
+	cp -f /etc/retroarch.cfg "$cfg"
+fi
+
+if [ ! -f "$cfg" ]; then
+	: >"$cfg"
+fi
+
+count_files() {
+	dir=$1
+	pattern=$2
+
+	[ -d "$dir" ] || {
+		echo 0
+		return 0
+	}
+
+	find "$dir" -maxdepth 1 -type f -name "$pattern" | wc -l | awk '{print $1}'
+}
+
+sync_missing_cfg_files() {
+	src_dir=$1
+	dst_dir=$2
+
+	[ -d "$src_dir" ] || return 0
+	mkdir -p "$dst_dir"
+
+	find "$src_dir" -maxdepth 1 -type f -name '*.cfg' | while IFS= read -r src; do
+		dst="$dst_dir/$(basename "$src")"
+		[ -e "$dst" ] || cp -f "$src" "$dst"
+	done
+}
+
+cleanup_removed_platform_content() {
+	rm -f \
+		"$base/cores/melonds_libretro.so" \
+		"$base/cores/melondsds_libretro.so" \
+		"$base/cores/melonds_ds_libretro.so" \
+		"$base/cores/flycast_libretro.so" \
+		"$base/info/melonds_libretro.info" \
+		"$base/info/melondsds_libretro.info" \
+		"$base/info/melonds_ds_libretro.info" \
+		"$base/info/flycast_libretro.info" \
+		"$shared_bios/firmware.bin" \
+		"$shared_bios/bios7.bin" \
+		"$shared_bios/bios9.bin" \
+		"$shared_bios/dc/naomi.zip"
+
+	rm -f "$base/config/retroarch/config/melonDS/melonDS.opt"
+	rmdir "$base/config/retroarch/config/melonDS" 2>/dev/null || true
+	rm -f "$base/config/retroarch/config/Flycast/Flycast.opt"
+	rmdir "$base/config/retroarch/config/Flycast" 2>/dev/null || true
+	rmdir "$base/config/retroarch/config" 2>/dev/null || true
+	rmdir "$shared_bios/dc" 2>/dev/null || true
+
+	rm -rf \
+		"$base/cheats/melonDS" \
+		"$base/playlists/logs/melonDS"
+}
+
+seed_already_present() {
+	seed_cores="$(count_files "$seed_root/cores" '*.so')"
+	seed_info="$(count_files "$seed_root/info" '*.info')"
+	seed_autoconfig="$(count_files '/usr/share/gamestick/input/retroarch-autoconfig/udev' '*.cfg')"
+
+	user_cores="$(count_files "$base/cores" '*.so')"
+	user_info="$(count_files "$base/info" '*.info')"
+	user_autoconfig="$(count_files "$base/autoconfig/udev" '*.cfg')"
+
+	[ "$seed_cores" -gt 0 ] || return 1
+	[ "$user_cores" -ge "$seed_cores" ] || return 1
+	[ "$user_info" -ge "$seed_info" ] || return 1
+	[ "$user_autoconfig" -ge "$seed_autoconfig" ] || return 1
+	return 0
+}
+
+need_content_seed=0
+if [ ! -f "$content_seed_stamp" ]; then
+	need_content_seed=1
+fi
+if ! seed_already_present; then
+	need_content_seed=1
+fi
+
+if [ "$need_content_seed" -eq 1 ]; then
+	required_kb=16384
+	for seed_dir in "$seed_root/cores" "$seed_root/info" "$seed_root/bios" "$seed_root/cheats" /usr/share/retroarch/autoconfig; do
+		[ -d "$seed_dir" ] || continue
+		size_kb="$(du -sk "$seed_dir" 2>/dev/null | awk 'NR==1 { print $1 }')"
+		size_kb="${size_kb:-0}"
+		required_kb=$((required_kb + size_kb))
+	done
+
+	available_kb="$(df -Pk /storage 2>/dev/null | awk 'NR==2 { print $4 }')"
+	available_kb="${available_kb:-0}"
+	if [ "$available_kb" -lt "$required_kb" ]; then
+		echo "retroarch-kms: not enough free space in /storage for first-boot seed" >&2
+		exit 1
+	fi
+
+	if [ -d "$seed_root/cores" ]; then
+		cp -a "$seed_root/cores/." "$base/cores/" 2>/dev/null || true
+	fi
+	if [ -d "$seed_root/info" ]; then
+		cp -a "$seed_root/info/." "$base/info/" 2>/dev/null || true
+	fi
+	if [ -d "$seed_root/bios" ]; then
+		cp -R "$seed_root/bios/." "$shared_bios/" 2>/dev/null || true
+	fi
+	if [ -d "$seed_root/cheats" ]; then
+		cp -a "$seed_root/cheats/." "$base/cheats/" 2>/dev/null || true
+	fi
+	sync_missing_cfg_files /usr/share/gamestick/input/retroarch-autoconfig/udev \
+		"$base/autoconfig/udev"
+	sync_missing_cfg_files /usr/share/retroarch/autoconfig/udev \
+		"$base/autoconfig/udev"
+	: >"$content_seed_stamp"
+fi
+
+cleanup_removed_platform_content
+
+ensure_setting() {
+	key="$1"
+	value="$2"
+
+	if grep -Eq "^[[:space:]]*${key}[[:space:]]*=" "$cfg"; then
+		sed -i "s|^[[:space:]]*${key}[[:space:]]*=.*|${key} = ${value}|" "$cfg"
+	else
+		printf '%s = %s\n' "$key" "$value" >>"$cfg"
+	fi
+}
+
+setting_value() {
+	key="$1"
+	sed -n "s|^[[:space:]]*${key}[[:space:]]*=[[:space:]]*||p" "$cfg" | tail -n 1
+}
+
+strip_quotes() {
+	printf '%s' "$1" | sed 's/^"//; s/"$//'
+}
+
+default_profile_for_system() {
+	system_name=$1
+	case "$system_name" in
+		arcade|neogeo|nes|famicom|fds|snes|sfc|mastersystem|megadrive|genesis|segacd|megacd|pcengine|tg16|pcenginecd|tg-cd|psx)
+			echo crt-light
+			;;
+		gb|gbc|gba|gamegear|ngp|ngpc|wonderswan|wonderswancolor|dos|amiga|amigacd32|msx|msx2|c64)
+			echo sharp-lcd
+			;;
+		*)
+			echo sharp-lcd
+			;;
+	esac
+}
+
+default_profile_for_core() {
+	core_name=$1
+	case "$core_name" in
+		fbneo|mame2003_plus|mame2010|quicknes|nestopia|mesen|snes9x|snes9x2005_plus|genesis_plus_gx|mednafen_pce_fast|pcsx_rearmed)
+			echo crt-light
+			;;
+		gambatte|gearboy|mgba|gpsp|mednafen_ngp|mednafen_wswan|dosbox_pure|dosbox_svn|puae2021|puae|bluemsx|fmsx|vice_x64sc)
+			echo sharp-lcd
+			;;
+		*)
+			echo sharp-lcd
+			;;
+	esac
+}
+
+default_system_cfg_for_system() {
+	system_name=$1
+	case "$system_name" in
+		arcade|neogeo)
+			echo arcade
+			;;
+		gb|gbc|gba|gamegear|ngp|ngpc|wonderswan|wonderswancolor)
+			echo handheld
+			;;
+		dos|amiga|amigacd32|msx|msx2|c64)
+			echo computer
+			;;
+		psx)
+			echo psx
+			;;
+		nes|famicom|fds|snes|sfc|mastersystem|megadrive|genesis|segacd|megacd|pcengine|tg16|pcenginecd|tg-cd)
+			echo console
+			;;
+		*)
+			echo default
+			;;
+	esac
+}
+
+default_system_cfg_for_core() {
+	core_name=$1
+	case "$core_name" in
+		fbneo|mame2003_plus|mame2010)
+			echo arcade
+			;;
+		gambatte|gearboy|mgba|gpsp|mednafen_ngp|mednafen_wswan)
+			echo handheld
+			;;
+		dosbox_pure|dosbox_svn|puae2021|puae|bluemsx|fmsx|vice_x64sc)
+			echo computer
+			;;
+		pcsx_rearmed)
+			echo psx
+			;;
+		quicknes|nestopia|mesen|snes9x|snes9x2005_plus|genesis_plus_gx|mednafen_pce_fast)
+			echo console
+			;;
+		*)
+			echo default
+			;;
+	esac
+}
+
+detect_core_name() {
+	core_path=$1
+	core_base=$(basename "$core_path")
+	core_base=${core_base%.so}
+	core_base=${core_base%_libretro}
+	echo "$core_base"
+}
+
+detect_system_name() {
+	content_path=$1
+	case "$content_path" in
+		/storage/roms/*)
+			rel_path=${content_path#/storage/roms/}
+			echo "${rel_path%%/*}"
+			;;
+	esac
+}
+
+append_cfg() {
+	cfg_path=$1
+	[ -f "$cfg_path" ] || return 0
+
+	if [ -n "${append_configs:-}" ]; then
+		append_configs="${append_configs}|${cfg_path}"
+	else
+		append_configs="$cfg_path"
+	fi
+}
+
+cleanup_legacy_player1_bindings() {
+	tmp_cfg=$(mktemp "$cfg_dir/retroarch_cfg.XXXXXX")
+
+	awk '
+		/^[[:space:]]*input_player1_/ { next }
+		/^[[:space:]]*input_device_p1[[:space:]]*=/ { next }
+		{ print }
+	' "$cfg" >"$tmp_cfg"
+
+	mv "$tmp_cfg" "$cfg"
+}
+
+needs_legacy_player1_cleanup() {
+	grep -Eq '^[[:space:]]*input_player1_a[[:space:]]*=[[:space:]]*"x"' "$cfg" && return 0
+	grep -Eq '^[[:space:]]*input_player1_b[[:space:]]*=[[:space:]]*"z"' "$cfg" && return 0
+	grep -Eq '^[[:space:]]*input_player1_joypad_index[[:space:]]*=[[:space:]]*"0"' "$cfg" && \
+	grep -Eq '^[[:space:]]*input_player1_[^=]*_btn[[:space:]]*=[[:space:]]*"nul"' "$cfg" && return 0
+	return 1
+}
+
+ensure_setting input_driver '"udev"'
+ensure_setting input_joypad_driver '"udev"'
+ensure_setting input_autodetect_enable '"true"'
+ensure_setting joypad_autoconfig_dir '"/storage/retroarch/autoconfig"'
+ensure_setting input_enable_hotkey_btn '"nul"'
+ensure_setting input_exit_emulator_btn '"nul"'
+ensure_setting input_menu_toggle_gamepad_combo '"0"'
+ensure_setting input_quit_gamepad_combo '"4"'
+ensure_setting menu_show_online_updater '"false"'
+ensure_setting menu_show_core_updater '"false"'
+ensure_setting cache_directory '"/storage/retroarch/cache"'
+ensure_setting assets_directory '"/usr/share/retroarch/assets"'
+ensure_setting libretro_directory '"/storage/retroarch/cores"'
+ensure_setting libretro_info_path '"/storage/retroarch/info"'
+ensure_setting content_database_path '"/storage/retroarch/database/rdb"'
+ensure_setting cheat_database_path '"/storage/retroarch/cheats"'
+ensure_setting video_filter_dir '"/storage/retroarch/filters/video"'
+ensure_setting audio_filter_dir '"/storage/retroarch/filters/audio"'
+ensure_setting video_shader_dir '"/storage/retroarch/shaders"'
+ensure_setting overlay_directory '"/storage/retroarch/overlays"'
+ensure_setting playlist_directory '"/storage/retroarch/playlists"'
+ensure_setting thumbnails_directory '"/storage/retroarch/thumbnails"'
+ensure_setting input_remapping_directory '"/storage/retroarch/remaps"'
+ensure_setting core_options_path '"/storage/retroarch/config/retroarch-core-options.cfg"'
+ensure_setting savefile_directory '"/storage/retroarch/saves"'
+ensure_setting savestate_directory '"/storage/retroarch/states"'
+ensure_setting screenshot_directory '"/storage/retroarch/screenshots"'
+
+if [ ! -f "$input_migration_stamp" ] && needs_legacy_player1_cleanup; then
+	cleanup_legacy_player1_bindings
+	: >"$input_migration_stamp"
+fi
+
+current_menu=$(strip_quotes "$(setting_value menu_driver)")
+if [ -z "$current_menu" ] || [ "$current_menu" = "rgui" ]; then
+	ensure_setting menu_driver '"ozone"'
+fi
+
+current_system_dir=$(strip_quotes "$(setting_value system_directory)")
+if [ -z "$current_system_dir" ] || [ "$current_system_dir" = "/storage/system" ] || [ "$current_system_dir" = "/storage/retroarch/system" ] || [ "$current_system_dir" = "/storage/retroarch/config/retroarch/system" ]; then
+	ensure_setting system_directory '"/storage/bios"'
+fi
+
+current_audio_driver=$(strip_quotes "$(setting_value audio_driver)")
+if [ -z "$current_audio_driver" ] || [ "$current_audio_driver" = "alsathread" ]; then
+	ensure_setting audio_driver '"alsa"'
+fi
+
+current_audio_device=$(strip_quotes "$(setting_value audio_device)")
+case "$current_audio_device" in
+	""|hw:0,0|plughw:0,0)
+		ensure_setting audio_device '"default"'
+		;;
+esac
+
+ensure_setting audio_enable '"true"'
+ensure_setting audio_mute_enable '"false"'
+ensure_setting audio_enable_menu '"true"'
+ensure_setting audio_enable_menu_bgm '"true"'
+ensure_setting audio_enable_menu_ok '"true"'
+ensure_setting audio_enable_menu_cancel '"true"'
+ensure_setting audio_enable_menu_notice '"true"'
+ensure_setting audio_enable_menu_scroll '"true"'
+ensure_setting input_overlay_hide_when_gamepad_connected '"false"'
+
+current_language=$(strip_quotes "$(setting_value user_language)")
+if [ -z "$current_language" ] || [ "$current_language" = "0" ]; then
+	ensure_setting user_language '"9"'
+fi
+
+core_path=
+content_path=
+expect_core_path=0
+for arg in "$@"; do
+	if [ "$expect_core_path" -eq 1 ]; then
+		core_path=$arg
+		expect_core_path=0
+		continue
+	fi
+
+	case "$arg" in
+		-L|--libretro)
+			expect_core_path=1
+			;;
+		-*)
+			;;
+		*)
+			if [ -z "$content_path" ]; then
+				content_path=$arg
+			fi
+			;;
+	esac
+done
+
+core_name=
+system_name=
+profile_name=
+system_cfg_name=
+append_configs=
+
+if [ -n "$core_path" ]; then
+	core_name=$(detect_core_name "$core_path")
+fi
+
+if [ -n "$content_path" ]; then
+	system_name=$(detect_system_name "$content_path")
+fi
+
+if [ -n "$system_name" ]; then
+	profile_name=$(default_profile_for_system "$system_name")
+	system_cfg_name=$(default_system_cfg_for_system "$system_name")
+else
+	profile_name=$(default_profile_for_core "$core_name")
+	system_cfg_name=$(default_system_cfg_for_core "$core_name")
+fi
+
+append_cfg "$defaults_root/config/profiles/${profile_name}.cfg"
+append_cfg "$defaults_root/config/systems/${system_cfg_name}.cfg"
+if [ -n "$system_name" ]; then
+	append_cfg "$defaults_root/config/system-bezels/${system_name}.cfg"
+fi
+append_cfg "$gamestick_override_dir/global.cfg"
+
+if [ -n "$system_name" ]; then
+	append_cfg "$gamestick_override_dir/systems/${system_name}.cfg"
+fi
+
+if [ -n "$core_name" ]; then
+	append_cfg "$gamestick_override_dir/cores/${core_name}.cfg"
+fi
+
+if [ -n "$system_name" ] && [ -n "$content_path" ]; then
+	game_dir="$gamestick_override_dir/games/$system_name"
+	mkdir -p "$game_dir"
+	append_cfg "$game_dir/$(basename "$content_path").cfg"
+fi
+
+: >"$log_file"
+
+if [ -n "$append_configs" ]; then
+	if /usr/bin/retroarch --verbose --config "$cfg" --appendconfig "$append_configs" "$@" >>"$log_file" 2>&1; then
+		exit 0
+	fi
+else
+	if /usr/bin/retroarch --verbose --config "$cfg" "$@" >>"$log_file" 2>&1; then
+		exit 0
+	fi
+fi
+
+status=$?
+echo "retroarch-kms: retroarch exited with status $status" >&2
+tail -n 120 "$log_file" >&2 || true
+exit "$status"

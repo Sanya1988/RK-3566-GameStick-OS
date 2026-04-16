@@ -1,0 +1,25 @@
+image sdcard.img {
+	hdimage {
+		partition-table-type = "gpt"
+		gpt-no-backup = true
+	}
+
+	partition uboot {
+		in-partition-table = false
+		image = "u-boot-rockchip.bin"
+		offset = 32K
+	}
+
+	partition rootfs {
+		offset = 16M
+		partition-type-uuid = L
+		image = "rootfs.ext4"
+		partition-uuid = %PARTUUID%
+		bootable = true
+	}
+
+	partition USERDATA {
+		partition-type-uuid = F
+		image = "userdata-partition.bin"
+	}
+}

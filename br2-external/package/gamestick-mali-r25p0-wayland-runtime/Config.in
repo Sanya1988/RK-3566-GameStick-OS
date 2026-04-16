@@ -1,0 +1,9 @@
+config BR2_PACKAGE_GAMESTICK_MALI_R25P0_WAYLAND_RUNTIME
+	bool "gamestick-mali-r25p0-wayland-runtime"
+	depends on BR2_aarch64
+	help
+	  Installs the known-good Mali userspace runtime layout from the
+	  earlier working GameStick baseline:
+	  G52 r25p0 wayland package layout plus the minimal wayland/libffi
+	  runtime libraries it required on target.
+

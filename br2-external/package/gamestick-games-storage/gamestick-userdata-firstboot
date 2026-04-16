@@ -1,0 +1,203 @@
+#!/bin/sh
+
+set -eu
+
+. /usr/lib/gamestick/storage-common.sh
+
+SEED_HELPER=/usr/lib/gamestick/userdata-seed.sh
+TMP_MOUNT=/tmp/gamestick-userdata-firstboot
+
+cleanup() {
+	if grep -qs " $TMP_MOUNT " /proc/mounts; then
+		umount "$TMP_MOUNT" >/dev/null 2>&1 || true
+	fi
+
+	rmdir "$TMP_MOUNT" 2>/dev/null || true
+}
+
+fail_firstboot() {
+	reason=$1
+	log "ERROR: $reason"
+	write_firstboot_state failed
+	arm_boot_to_shell
+	tell_psplash "Storage setup failed"
+	return 1
+}
+
+require_command() {
+	command -v "$1" >/dev/null 2>&1 || fail_firstboot "missing required command: $1"
+}
+
+refresh_partition_table() {
+	disk=$1
+	disk_name=$(basename "$disk")
+
+	sync
+	blockdev --rereadpt "$disk" >/dev/null 2>&1 || true
+	partprobe "$disk" >/dev/null 2>&1 || true
+	partx -u "$disk" >/dev/null 2>&1 || true
+	partx -u --nr "$GAMESTICK_USERDATA_PARTNUM" "$disk" >/dev/null 2>&1 || true
+
+	for rescan_path in \
+		"/sys/block/$disk_name/device/rescan" \
+		"/sys/class/block/$disk_name/device/rescan" \
+		"/sys/block/$disk_name/rescan"
+	do
+		[ -w "$rescan_path" ] || continue
+		echo 1 >"$rescan_path" 2>/dev/null || true
+	done
+
+	if command -v mdev >/dev/null 2>&1; then
+		mdev -s >/dev/null 2>&1 || true
+	fi
+
+	if command -v udevadm >/dev/null 2>&1; then
+		udevadm settle >/dev/null 2>&1 || true
+	else
+		sleep 1
+	fi
+}
+
+attempt_live_resize_completion() {
+	userdata_dev=$1
+	disk=$2
+
+	require_command blockdev
+	require_command partprobe
+
+	if command -v partx >/dev/null 2>&1; then
+		:
+	fi
+
+	attempt=1
+	while [ "$attempt" -le 10 ]; do
+		log "refreshing partition table for $disk without reboot (attempt $attempt)"
+		refresh_partition_table "$disk"
+
+		part_size="$(device_size_bytes "$userdata_dev")"
+		if [ "$part_size" -ge "$GAMESTICK_USERDATA_MIN_SIZE_BYTES" ]; then
+			log "kernel now sees expanded USERDATA partition on $userdata_dev ($part_size bytes)"
+			format_and_seed_userdata "$userdata_dev"
+			return 0
+		fi
+
+		attempt=$((attempt + 1))
+		sleep 1
+	done
+
+	return 1
+}
+
+handoff_to_second_boot() {
+	show_firstboot_screen transition "Phase 1 done. Power on again"
+	log "live partition table refresh was insufficient; powering off so phase 2 can continue on the next boot"
+	sync
+	sleep 5
+
+	/sbin/poweroff -f || true
+	/sbin/poweroff || true
+	fail_firstboot "poweroff request returned after phase 1"
+}
+
+mark_done_if_userdata_exists() {
+	userdata_dev=$1
+	fs_type="$(device_fs_type "$userdata_dev")"
+
+	if is_supported_userdata_fs "$fs_type"; then
+		log "existing $fs_type USERDATA detected on $userdata_dev; skipping firstboot format"
+		write_firstboot_state done
+		return 0
+	fi
+
+	return 1
+}
+
+resize_userdata_partition() {
+	userdata_dev=$1
+	disk="$(disk_device_from_partition "$userdata_dev" || true)"
+	[ -n "$disk" ] || fail_firstboot "failed to resolve parent disk for $userdata_dev"
+
+	require_command sfdisk
+
+	show_firstboot_screen stage1 "Preparing storage (1/2)"
+	log "expanding $userdata_dev on $disk to fill the card"
+	printf ', +\n' | sfdisk --force --no-reread -N "$GAMESTICK_USERDATA_PARTNUM" "$disk" \
+		|| fail_firstboot "sfdisk failed while resizing $userdata_dev"
+
+	write_firstboot_state resized
+	if attempt_live_resize_completion "$userdata_dev" "$disk"; then
+		return 0
+	fi
+
+	log "partition table updated, but expanded size is still not visible in this boot"
+	handoff_to_second_boot
+	exit 0
+}
+
+format_and_seed_userdata() {
+	userdata_dev=$1
+
+	require_command mkfs.exfat
+	[ -r "$SEED_HELPER" ] || fail_firstboot "missing seed helper: $SEED_HELPER"
+
+	show_firstboot_screen stage2 "Preparing storage (2/2)"
+	log "formatting $userdata_dev as exFAT"
+	mkfs.exfat -L "$GAMESTICK_USERDATA_LABEL" "$userdata_dev" \
+		|| fail_firstboot "mkfs.exfat failed for $userdata_dev"
+
+	mkdir -p "$TMP_MOUNT"
+	mount_exfat_storage "$userdata_dev" "$TMP_MOUNT" \
+		|| fail_firstboot "failed to mount freshly formatted USERDATA at $TMP_MOUNT"
+
+	# shellcheck source=/dev/null
+	. "$SEED_HELPER"
+	seed_userdata_from_root / "$TMP_MOUNT" \
+		|| fail_firstboot "failed while seeding USERDATA from rootfs"
+
+	umount "$TMP_MOUNT" >/dev/null 2>&1 || true
+	rmdir "$TMP_MOUNT" 2>/dev/null || true
+	write_firstboot_state done
+	log "USERDATA initialization finished"
+	show_firstboot_screen complete "Storage ready"
+	sleep 2
+}
+
+start_firstboot() {
+	trap cleanup EXIT
+
+	if grep -qs " $GAMESTICK_USERDATA_MOUNTPOINT " /proc/mounts; then
+		return 0
+	fi
+
+	userdata_dev="$(preferred_userdata_partition || true)"
+	if [ -z "$userdata_dev" ] || [ ! -b "$userdata_dev" ]; then
+		log "partition $GAMESTICK_USERDATA_PARTNUM is not available yet; skipping firstboot USERDATA init"
+		return 0
+	fi
+
+	if mark_done_if_userdata_exists "$userdata_dev"; then
+		return 0
+	fi
+
+	part_size="$(device_size_bytes "$userdata_dev")"
+	if [ "$part_size" -ge "$GAMESTICK_USERDATA_MIN_SIZE_BYTES" ]; then
+		log "detected resized raw USERDATA partition on $userdata_dev ($part_size bytes)"
+		format_and_seed_userdata "$userdata_dev"
+		return 0
+	fi
+
+	log "detected placeholder USERDATA partition on $userdata_dev ($part_size bytes)"
+	resize_userdata_partition "$userdata_dev"
+
+	return 0
+}
+
+case "${1:-start}" in
+	start)
+		start_firstboot
+		;;
+	*)
+		echo "Usage: $0 start" >&2
+		exit 1
+		;;
+esac

@@ -1,0 +1,279 @@
+#!/bin/sh
+set -eu
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+STATE_DIR=/run/gamestick-input
+PIDFILE="$STATE_DIR/monitor.pid"
+SEED_DIR=/usr/share/gamestick/input/retroarch-autoconfig/udev
+INDEX_FILE=/usr/share/gamestick/input/autoconfig-index.tsv
+TARGET_DIR=/storage/retroarch/autoconfig/udev
+USER_PROFILE_DIR=/storage/system/input/profiles/udev
+OVERRIDE_DIR=/storage/system/input/overrides/udev
+LOG_FILE=/storage/system/logs/input.log
+
+timestamp() {
+	date '+%Y-%m-%d %H:%M:%S'
+}
+
+log_line() {
+	mkdir -p "$(dirname "$LOG_FILE")"
+	printf '%s gamestick-input: %s\n' "$(timestamp)" "$*" >>"$LOG_FILE"
+}
+
+storage_ready() {
+	grep -qs ' /storage ' /proc/mounts
+}
+
+normalize_name() {
+	printf '%s' "$1" | tr '\t' ' ' | tr -s ' ' | sed 's/^ //; s/ $//'
+}
+
+sanitize_name() {
+	normalize_name "$1" | sed 's#[/\\]#_#g; s/[^[:alnum:][:space:]._()+-]/_/g; s/^[. ]*//; s/[. ]*$//'
+}
+
+profile_filename() {
+	name="$(sanitize_name "$1")"
+	vendor="${2:-}"
+	product="${3:-}"
+
+	[ -n "$name" ] || name="controller"
+
+	if [ -n "$vendor" ] && [ -n "$product" ]; then
+		printf '%s__%s_%s.cfg' "$name" "$vendor" "$product"
+	else
+		printf '%s.cfg' "$name"
+	fi
+}
+
+ensure_dirs() {
+	mkdir -p \
+		"$STATE_DIR" \
+		"$TARGET_DIR" \
+		"$USER_PROFILE_DIR" \
+		"$OVERRIDE_DIR" \
+		/storage/system/input/profiles \
+		/storage/system/input/quirks \
+		/storage/system/logs
+}
+
+sync_seed_profiles() {
+	[ -d "$SEED_DIR" ] || return 0
+
+	find "$SEED_DIR" -maxdepth 1 -type f -name '*.cfg' | while IFS= read -r src; do
+		base="$(basename "$src")"
+		dst="$TARGET_DIR/$base"
+		[ -f "$dst" ] || cp -f "$src" "$dst"
+	done
+}
+
+sync_user_profiles() {
+	[ -d "$USER_PROFILE_DIR" ] || return 0
+
+	find "$USER_PROFILE_DIR" -maxdepth 1 -type f -name '*.cfg' | while IFS= read -r src; do
+		base="$(basename "$src")"
+		cp -f "$src" "$TARGET_DIR/$base"
+		log_line "user profile installed file=\"$base\""
+	done
+}
+
+apply_user_overrides() {
+	[ -d "$OVERRIDE_DIR" ] || return 0
+
+	find "$OVERRIDE_DIR" -maxdepth 1 -type f -name '*.cfg' | while IFS= read -r src; do
+		base="$(basename "$src")"
+		cp -f "$src" "$TARGET_DIR/$base"
+		log_line "override applied file=\"$base\""
+	done
+}
+
+escape_cfg_value() {
+	printf '%s' "$1" | sed 's/[&|\\]/\\&/g; s/"/\\"/g'
+}
+
+decimal_from_hex() {
+	value="$(printf '%s' "$1" | tr 'A-F' 'a-f')"
+	[ -n "$value" ] || return 1
+	printf '%d' "0x$value" 2>/dev/null
+}
+
+set_cfg_value() {
+	cfg_file=$1
+	key=$2
+	value=$3
+
+	if grep -q "^${key} = " "$cfg_file"; then
+		sed -i "s|^${key} = .*|${key} = ${value}|" "$cfg_file"
+	else
+		printf '%s = %s\n' "$key" "$value" >>"$cfg_file"
+	fi
+}
+
+delete_cfg_key() {
+	cfg_file=$1
+	key=$2
+	sed -i "/^${key} = /d" "$cfg_file"
+}
+
+template_for_device() {
+	name="$(normalize_name "$1")"
+	vendor=$(printf '%s' "$2" | tr 'A-F' 'a-f')
+	product=$(printf '%s' "$3" | tr 'A-F' 'a-f')
+
+	awk -F '\t' -v want_name="$name" -v want_vendor="$vendor" -v want_product="$product" '
+		BEGIN {
+			exact = ""
+			by_name = ""
+			by_vidpid = ""
+		}
+		NR == 1 { next }
+		{
+			file = $1
+			vendor = tolower($3)
+			product = tolower($4)
+			name = $5
+			lookup = $6
+			if (lookup == "")
+				lookup = name
+			if (lookup == want_name && vendor == want_vendor && product == want_product) {
+				exact = file
+				print exact
+				exit
+			}
+			if (by_name == "" && lookup == want_name)
+				by_name = file
+			if (by_vidpid == "" && want_vendor != "" && want_product != "" &&
+			    vendor == want_vendor && product == want_product)
+				by_vidpid = file
+		}
+		END {
+			if (exact != "")
+				exit
+			if (by_name != "") {
+				print by_name
+				exit
+			}
+			if (by_vidpid != "")
+				print by_vidpid
+		}
+	' "$INDEX_FILE" | head -n 1
+}
+
+write_alias_profile() {
+	template=$1
+	name=$2
+	vendor=$3
+	product=$4
+	dst=$5
+	escaped_name="$(escape_cfg_value "$name")"
+
+	cp -f "$SEED_DIR/$template" "$dst"
+
+	set_cfg_value "$dst" input_device "\"$escaped_name\""
+
+	if vendor_dec="$(decimal_from_hex "$vendor" 2>/dev/null)"; then
+		set_cfg_value "$dst" input_vendor_id "\"$vendor_dec\""
+	else
+		delete_cfg_key "$dst" input_vendor_id
+	fi
+
+	if product_dec="$(decimal_from_hex "$product" 2>/dev/null)"; then
+		set_cfg_value "$dst" input_product_id "\"$product_dec\""
+	else
+		delete_cfg_key "$dst" input_product_id
+	fi
+}
+
+collect_devices() {
+	for js in /sys/class/input/js*; do
+		[ -e "$js" ] || continue
+		devdir="$(readlink -f "$js/device" 2>/dev/null || true)"
+		[ -n "$devdir" ] || continue
+		[ -d "$devdir" ] || continue
+
+		name="$(cat "$devdir/name" 2>/dev/null || true)"
+		vendor="$(tr 'A-F' 'a-f' < "$devdir/id/vendor" 2>/dev/null || true)"
+		product="$(tr 'A-F' 'a-f' < "$devdir/id/product" 2>/dev/null || true)"
+		phys="$(cat "$devdir/phys" 2>/dev/null || true)"
+		uniq="$(cat "$devdir/uniq" 2>/dev/null || true)"
+
+		[ -n "$name" ] || continue
+
+		printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+			"$(basename "$js")" \
+			"$vendor" \
+			"$product" \
+			"$name" \
+			"$phys" \
+			"$uniq"
+	done
+}
+
+refresh_once() {
+	[ -f "$INDEX_FILE" ] || return 0
+	storage_ready || return 0
+
+	ensure_dirs
+	sync_seed_profiles
+	sync_user_profiles
+	apply_user_overrides
+
+	tmp_snapshot="$(mktemp "$STATE_DIR/devices.XXXXXX")"
+
+	collect_devices | while IFS="$(printf '\t')" read -r node vendor product name phys uniq; do
+		printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+			"$node" "$vendor" "$product" "$name" "$phys" "$uniq" >>"$tmp_snapshot"
+
+		file="$(profile_filename "$name" "$vendor" "$product")"
+		dst="$TARGET_DIR/$file"
+
+		if [ -f "$dst" ]; then
+			log_line "device=\"$node\" name=\"$name\" vendor=\"$vendor\" product=\"$product\" profile=\"exact\" file=\"$file\""
+			continue
+		fi
+
+		template="$(template_for_device "$name" "$vendor" "$product" || true)"
+		if [ -n "$template" ] && [ -f "$SEED_DIR/$template" ]; then
+			write_alias_profile "$template" "$name" "$vendor" "$product" "$dst"
+			log_line "device=\"$node\" name=\"$name\" vendor=\"$vendor\" product=\"$product\" profile=\"generated\" template=\"$template\" file=\"$file\""
+		else
+			log_line "device=\"$node\" name=\"$name\" vendor=\"$vendor\" product=\"$product\" profile=\"unmatched\""
+		fi
+	done
+
+	mv "$tmp_snapshot" "$STATE_DIR/devices.snapshot"
+}
+
+monitor_loop() {
+	prev=""
+	while :; do
+		if storage_ready; then
+			sig="$(collect_devices | cksum | awk '{print $1 ":" $2}')"
+			if [ "$sig" != "$prev" ]; then
+				refresh_once || true
+				prev="$sig"
+			fi
+		fi
+		sleep 2
+	done
+}
+
+case "${1:---once}" in
+	--once)
+		refresh_once
+		;;
+	--monitor)
+		monitor_loop
+		;;
+	--stop-monitor)
+		if [ -f "$PIDFILE" ]; then
+			kill "$(cat "$PIDFILE")" >/dev/null 2>&1 || true
+			rm -f "$PIDFILE"
+		fi
+		;;
+	*)
+		echo "Usage: $0 [--once|--monitor|--stop-monitor]" >&2
+		exit 1
+		;;
+esac

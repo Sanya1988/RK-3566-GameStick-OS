@@ -1,0 +1,4 @@
+LABEL primary
+  kernel %KERNEL_IMAGE%
+  fdt %DTB_PATH%
+  append console=ttyS2,1500000n8 root=/dev/mmcblk1p1 rootfstype=ext4 rw rootwait clk_ignore_unused pstore.backend=ramoops ramoops.mem_address=0x1f000000 ramoops.mem_size=0x00080000 ramoops.record_size=0x00020000 ramoops.console_size=0x00020000 ramoops.pmsg_size=0x00020000 quiet loglevel=0 vt.global_cursor_default=0

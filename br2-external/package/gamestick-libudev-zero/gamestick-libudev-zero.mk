@@ -1,0 +1,40 @@
+################################################################################
+#
+# gamestick-libudev-zero
+#
+################################################################################
+
+GAMESTICK_LIBUDEV_ZERO_VERSION = 1.0.3
+GAMESTICK_LIBUDEV_ZERO_SITE = $(BR2_EXTERNAL_GAMESTICK_PATH)/package/gamestick-libudev-zero/src
+GAMESTICK_LIBUDEV_ZERO_SITE_METHOD = local
+GAMESTICK_LIBUDEV_ZERO_LICENSE = ISC
+GAMESTICK_LIBUDEV_ZERO_LICENSE_FILES = LICENSE
+GAMESTICK_LIBUDEV_ZERO_INSTALL_STAGING = YES
+
+GAMESTICK_LIBUDEV_ZERO_MAKE_OPTS = \
+	CC="$(TARGET_CC)" \
+	AR="$(TARGET_AR)" \
+	RANLIB="$(TARGET_RANLIB)" \
+	PREFIX=/usr \
+	LIBDIR=/usr/lib \
+	INCLUDEDIR=/usr/include \
+	PKGCONFIGDIR=/usr/lib/pkgconfig \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	CPPFLAGS="$(TARGET_CPPFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+
+define GAMESTICK_LIBUDEV_ZERO_BUILD_CMDS
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D) $(GAMESTICK_LIBUDEV_ZERO_MAKE_OPTS)
+endef
+
+define GAMESTICK_LIBUDEV_ZERO_INSTALL_STAGING_CMDS
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D) $(GAMESTICK_LIBUDEV_ZERO_MAKE_OPTS) \
+		DESTDIR=$(STAGING_DIR) install-shared
+endef
+
+define GAMESTICK_LIBUDEV_ZERO_INSTALL_TARGET_CMDS
+	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D) $(GAMESTICK_LIBUDEV_ZERO_MAKE_OPTS) \
+		DESTDIR=$(TARGET_DIR) install-shared
+endef
+
+$(eval $(generic-package))

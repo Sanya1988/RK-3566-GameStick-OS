@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gameList>
+    <game>
+        <path>./Miniplanets.bin</path>
+        <name>Miniplanets</name>
+        <desc>3D-платформер для Sega Mega Drive / Genesis. Бесплатная homebrew-игра от Sik.</desc>
+        <developer>Sik</developer>
+        <publisher>Sik</publisher>
+        <genre>Платформер</genre>
+        <players>1</players>
+    </game>
+</gameList>

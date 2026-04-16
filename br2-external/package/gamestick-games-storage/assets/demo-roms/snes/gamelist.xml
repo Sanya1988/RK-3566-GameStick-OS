@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gameList>
+    <game>
+        <path>./superrambler_v1-02_more_details.sfc</path>
+        <name>Super Rambler</name>
+        <desc>Короткая скоростная игра для SNES. Бесплатная homebrew-игра от torte00.</desc>
+        <developer>torte00</developer>
+        <publisher>torte00</publisher>
+        <genre>Аркада</genre>
+        <players>1</players>
+    </game>
+</gameList>

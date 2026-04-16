@@ -1,0 +1,5 @@
+# From https://downloads.sourceforge.net/project/freeimage/Source%20Distribution/3.18.0/FreeImage3180.zip
+sha256  f41379682f9ada94ea7b34fe86bf9ee00935a3147be41b6569c9605a53e438fd  FreeImage3180.zip
+
+# Locally computed from license-fi.txt in the source archive
+sha256  0bb9a3123297c73ae6e19c70459fb0e58f313f67ca63176fd43f8e77668b8243  license-fi.txt

@@ -1,0 +1,30 @@
+# Pinned libretro core refs for the first RK3566 RetroArch wave.
+# Format: <module> <git-ref>
+fbneo f84ac8a2f0f734533a07dc47c6b38062bce80b04
+mame2003_plus 9041a9e6ac587db4cfa153e0e6021fa8cbcf5e87
+mame2010 29095383c0281100fee2ee09f1438d8ae990c510
+mesen 4df4d3681e89321cd4e571ee5cacfdef91842566
+nestopia b0fd87dd07e3c52903435d302b04e5e97796f127
+quicknes 71782569078f29214017a966b0f992b9e512bf19
+snes9x e755ae51b61f49e4ac48bdeaa16e3c72e70db0e5
+snes9x2005_plus 10519b751ebc800accf4f95cf767e5533d96c97a
+snes9x2002 15826a2afc1474b30c310502b5dbe25c639be59d
+gambatte 9669d1f9266684e60ac1c5ed9b438bd2a02a3b4d
+gearboy bdc8be439b3720d204903c091bc27a1c0ebc16a2
+mgba 6ab29fed1b5139f19ac98c523fd4a6a7f0b30e38
+# gpsp is temporarily disabled for the current aarch64 wave.
+# The core falls back to the wrong unix/x86 dynarec path in this toolchain,
+# while mGBA already covers the GBA slot for v1.
+genesis_plus_gx ee71e47c8d4b3b73b596dea1d8a6bf8d2cac7662
+gearsystem 65342ad508a5b9ee46fad79420f9e517b8fc7d74
+mednafen_pce_fast f70c6c26d9ad3c661939b6638a48e6c01415d9e6
+mednafen_ngp 9abe025fa14a4835a9a4e14a09893520dd3019dc
+mednafen_wswan 392db084316475411f3f24bd1ea54dba72ecbe51
+pcsx_rearmed f475ab271eb026cce691f4bed739dbf0d35638d0
+dosbox_pure 21df79217c6895b337440644d6452581648fa21f
+dosbox_svn f87d9fe8c4fb73576cf44336a35ba81ae4dddfab
+puae2021 2.6.1
+puae 99145bf34993e21dac14973f784821d85729a91d
+bluemsx 8af516705652d240ef5bc69dea8276d0fdd16323
+fmsx 6b807c588d63677770f7f2ed8b94ca0e9da256ce
+vice_x64sc 8cf6a20017b1f331d5d3ac63b49a5fa75440073a

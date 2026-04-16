@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+
+asset_dir="${GAMESTICK_FIRSTBOOT_ASSET_DIR:-/usr/share/gamestick/firstboot}"
+
+show_image() {
+	image_path=$1
+	console_device="/dev/tty1"
+
+	[ -f "$image_path" ] || return 1
+	command -v fbv >/dev/null 2>&1 || return 1
+
+	if [ ! -c "$console_device" ]; then
+		console_device="/dev/console"
+	fi
+	[ -c "$console_device" ] || return 1
+
+	fbv -c -u -i -f -s 1 "$image_path" <"$console_device" >"$console_device" 2>&1
+}
+
+case "${1:-}" in
+	stage1)
+		show_image "$asset_dir/firstboot-1.png"
+		;;
+	transition)
+		show_image "$asset_dir/firstboot-transition.png"
+		;;
+	stage2)
+		show_image "$asset_dir/firstboot-2.png"
+		;;
+	complete)
+		show_image "$asset_dir/firstboot-complete.png"
+		;;
+	*)
+		echo "Usage: $0 {stage1|transition|stage2|complete}" >&2
+		exit 1
+		;;
+esac

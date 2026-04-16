@@ -1,0 +1,7 @@
+config BR2_PACKAGE_GAMESTICK_LIBUDEV_ZERO
+	bool "gamestick-libudev-zero"
+	depends on BR2_TOOLCHAIN_USES_GLIBC
+	depends on !BR2_STATIC_LIBS
+	help
+	  Minimal libudev-compatible userspace library used to build and run
+	  RetroArch udev input/joypad backends without requiring full eudev.

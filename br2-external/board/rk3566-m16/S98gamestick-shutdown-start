@@ -1,0 +1,9 @@
+#!/bin/sh
+
+case "$1" in
+	stop)
+		if [ -x /usr/bin/gamestick-shutdown-screen ]; then
+			/usr/bin/gamestick-shutdown-screen show-start
+		fi
+		;;
+esac

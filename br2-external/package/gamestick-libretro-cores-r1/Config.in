@@ -1,0 +1,5 @@
+config BR2_PACKAGE_GAMESTICK_LIBRETRO_CORES_R1
+	bool "gamestick-libretro-cores-r1"
+	help
+	  Curated RK3566 libretro core set built from pinned source
+	  revisions during the Buildroot package build.

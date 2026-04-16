@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+
+quit_boot_splash() {
+	if command -v psplash-write >/dev/null 2>&1; then
+		psplash-write "QUIT" >/dev/null 2>&1 || true
+	fi
+}
+
+log_file="/storage/system/logs/esde.log"
+es_input_config="/storage/esde/settings/es_input.xml"
+
+for marker in /boot/boot_to_shell /storage/boot_to_shell /storage/.boot_to_shell; do
+	if [ -e "$marker" ]; then
+		quit_boot_splash
+		exec /bin/sh
+	fi
+done
+
+if [ ! -x /usr/bin/gamestick-esde ]; then
+	quit_boot_splash
+	exec /bin/sh
+fi
+
+if [ ! -f "$es_input_config" ]; then
+	set -- --force-input-config "$@"
+fi
+
+if /usr/bin/gamestick-esde "$@"; then
+	exit 0
+fi
+
+if [ -f "$log_file" ]; then
+	tail -n 120 "$log_file" >&2 || true
+fi
+
+quit_boot_splash
+exec /bin/sh

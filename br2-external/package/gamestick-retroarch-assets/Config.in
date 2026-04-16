@@ -1,0 +1,6 @@
+config BR2_PACKAGE_GAMESTICK_RETROARCH_ASSETS
+	bool "gamestick-retroarch-assets"
+	help
+	  Minimal RetroArch asset pack for Gamestick images.
+	  Installs Ozone assets plus the XMB monochrome icon set,
+	  fallback fonts, GLUI assets and menu sounds.

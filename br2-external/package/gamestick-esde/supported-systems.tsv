@@ -1,0 +1,32 @@
+# es_system	tz_group	allowed_cores	status	notes
+arcade	Arcade/CPS/NeoGeo	fbneo|mame2003_plus|mame2010	enabled	primary
+neogeo	Arcade/CPS/NeoGeo	fbneo	enabled	primary
+nes	Nintendo 8-bit	quicknes|nestopia|mesen	enabled	primary
+famicom	Nintendo 8-bit	quicknes|nestopia|mesen	enabled	regional
+fds	Nintendo 8-bit	nestopia|mesen	enabled	disk
+snes	Nintendo 16-bit	snes9x|snes9x2005_plus	enabled	primary
+sfc	Nintendo 16-bit	snes9x|snes9x2005_plus	enabled	regional
+gb	Game Boy	gambatte|gearboy	enabled	primary
+gbc	Game Boy	gambatte|gearboy	enabled	primary
+gba	Game Boy Advance	mgba|gpsp	enabled	primary
+mastersystem	Sega 8-bit	genesis_plus_gx|gearsystem	enabled	primary
+gamegear	Sega 8-bit	genesis_plus_gx|gearsystem	enabled	primary
+megadrive	Sega 16-bit	genesis_plus_gx	enabled	primary
+genesis	Sega 16-bit	genesis_plus_gx	enabled	regional
+segacd	Sega CD	genesis_plus_gx	enabled	primary
+megacd	Sega CD	genesis_plus_gx	enabled	regional
+pcengine	PC Engine	mednafen_pce_fast	enabled	primary
+tg16	PC Engine	mednafen_pce_fast	enabled	regional
+pcenginecd	PC Engine CD	mednafen_pce_fast	enabled	primary
+tg-cd	PC Engine CD	mednafen_pce_fast	enabled	regional
+ngp	Neo Geo Pocket	mednafen_ngp	enabled	primary
+ngpc	Neo Geo Pocket	mednafen_ngp	enabled	primary
+wonderswan	WonderSwan	mednafen_wswan	enabled	primary
+wonderswancolor	WonderSwan	mednafen_wswan	enabled	primary
+psx	PlayStation	pcsx_rearmed	enabled	primary
+dos	DOS	dosbox_pure|dosbox_svn	enabled	primary
+amiga	Amiga	puae2021|puae	enabled	primary
+amigacd32	Amiga CD32	puae2021|puae	enabled	primary
+msx	MSX	bluemsx|fmsx	enabled	primary
+msx2	MSX	bluemsx|fmsx	enabled	primary
+c64	Commodore 64	vice_x64sc	enabled	primary

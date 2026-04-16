@@ -1,0 +1,9 @@
+config BR2_PACKAGE_GAMESTICK_INPUT
+	bool "gamestick-input"
+	help
+	  Lightweight controller subsystem for GameStick OS.
+
+	  Imports the Batocera controller database, generates RetroArch
+	  autoconfig profiles and SDL controller mappings at build time,
+	  and installs a small runtime refresh/logging layer with support
+	  for user overrides.

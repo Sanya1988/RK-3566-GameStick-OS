@@ -1,0 +1,5 @@
+config BR2_PACKAGE_GAMESTICK_BIOS
+	bool "gamestick-bios"
+	help
+	  Curated BIOS and firmware seed for the currently supported
+	  GameStick RetroArch core set.

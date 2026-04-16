@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gameList>
+    <game>
+        <path>./blaster.nes</path>
+        <name>Sliding Blaster</name>
+        <desc>Аркадный top-down шутер для NES с поддержкой мыши. Бесплатная homebrew-игра от NovaSquirrel.</desc>
+        <developer>NovaSquirrel</developer>
+        <publisher>NovaSquirrel</publisher>
+        <genre>Шутер</genre>
+        <players>2</players>
+    </game>
+</gameList>
