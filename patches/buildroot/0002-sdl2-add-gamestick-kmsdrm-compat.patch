@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: GameStick OS <noreply@example.com>
+Date: Fri, 17 Apr 2026 00:00:00 +0300
+Subject: [PATCH] sdl2: add GameStick KMSDRM compatibility hook
+
+The RK3566 image relies on a local KMSDRM compatibility shim and a lower
+GBM version requirement for the target userspace.
+---
+ package/sdl2/sdl2.mk | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/package/sdl2/sdl2.mk b/package/sdl2/sdl2.mk
+index 31f96d8e..755c162e 100644
+--- a/package/sdl2/sdl2.mk
++++ b/package/sdl2/sdl2.mk
+@@ -164,4 +164,18 @@ else
+ SDL2_CONF_OPTS += --disable-video-kmsdrm
+ endif
+ 
++ifdef BR2_EXTERNAL_GAMESTICK_PATH
++define SDL2_GAMESTICK_OLD_GBM_COMPAT
++	$(SED) 's/gbm >= 11\.1\.0/gbm >= 10.4.0/g' $(@D)/configure
++	if [ -f $(@D)/configure.ac ]; then \
++		$(SED) 's/gbm >= 11\.1\.0/gbm >= 10.4.0/g' $(@D)/configure.ac; \
++	fi
++	cp -f $(BR2_EXTERNAL_GAMESTICK_PATH)/sources/sdl2/SDL_kmsdrmdyn.c \
++		$(@D)/src/video/kmsdrm/SDL_kmsdrmdyn.c
++	cp -f $(BR2_EXTERNAL_GAMESTICK_PATH)/sources/sdl2/SDL_kmsdrmvideo.h \
++		$(@D)/src/video/kmsdrm/SDL_kmsdrmvideo.h
++endef
++SDL2_POST_EXTRACT_HOOKS += SDL2_GAMESTICK_OLD_GBM_COMPAT
++endif
++
+ $(eval $(autotools-package))
+-- 
+2.43.0

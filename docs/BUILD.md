@@ -36,6 +36,8 @@ make
 make -C buildroot O=$PWD/output BR2_EXTERNAL=$PWD/br2-external gamestick_rk3566_m16_defconfig
 ```
 
+Перед этим он автоматически накладывает локальные compatibility patches на чистый `buildroot` submodule. Поэтому и для `git clone --recursive`, и для release-архива нужно использовать именно `./scripts/init-build.sh`, а не вызывать `make ... defconfig` вручную.
+
 После этого обычная сборка идёт из `output/`:
 
 ```bash

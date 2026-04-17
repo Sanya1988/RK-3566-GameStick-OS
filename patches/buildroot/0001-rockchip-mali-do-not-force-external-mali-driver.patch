@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: GameStick OS <noreply@example.com>
+Date: Fri, 17 Apr 2026 00:00:00 +0300
+Subject: [PATCH] rockchip-mali: do not force external mali-driver
+
+RK3566 on this project uses the vendor in-tree Bifrost kernel driver
+from the BSP kernel. The upstream Buildroot external mali-driver package
+fails on this target and must not be auto-selected.
+---
+ package/rockchip-mali/Config.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/package/rockchip-mali/Config.in b/package/rockchip-mali/Config.in
+index 5a23954a..d5178567 100644
+--- a/package/rockchip-mali/Config.in
++++ b/package/rockchip-mali/Config.in
+@@ -12,12 +12,12 @@ config BR2_PACKAGE_ROCKCHIP_MALI
+ 	select BR2_PACKAGE_HAS_LIBGBM
+ 	select BR2_PACKAGE_LIBGBM_HAS_FEATURE_DMA_BUF
+ 	select BR2_PACKAGE_LIBDRM
+-	select BR2_PACKAGE_MALI_DRIVER if BR2_LINUX_KERNEL
+ 	help
+ 	  Install the binary user-space libraries for the ARM Mali GPU
+ 	  suitable for Rockchip platforms. This package requires a
+-	  kernel with the ARM Mali GPU kernel driver enabled, as found
+-	  in the 'mali-driver' package.
++	  kernel with the ARM Mali GPU kernel driver enabled. On this
++	  project, RK3566 uses the vendor in-tree Bifrost driver from
++	  the BSP kernel instead of Buildroot's external mali-driver.
+ 
+ if BR2_PACKAGE_ROCKCHIP_MALI
+ 
+-- 
+2.43.0
