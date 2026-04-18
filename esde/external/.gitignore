@@ -2,11 +2,11 @@
 !.gitignore
 !CMakeLists.txt
 !CImg
-!CImg/*
+!CImg/**
 !glm
-!glm/*
+!glm/**
 !lunasvg
-!lunasvg/*
+!lunasvg/**
 lunasvg/*.cmake
 lunasvg/*.vcxproj
 lunasvg/*.vcxproj.filters
@@ -14,9 +14,9 @@ lunasvg/Makefile
 lunasvg/lunasvg.sln
 lunasvg/lunasvg.pc
 !rapidjson
-!rapidjson/*
+!rapidjson/**
 !rlottie
-!rlottie/*
+!rlottie/**
 rlottie/*.cmake
 rlottie/*.vcxproj
 rlottie/*.vcxproj.filters
