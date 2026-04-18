@@ -7,7 +7,7 @@
 - `br2-external/` - product layer с конфигами и пакетами GameStick OS
 - `esde/` - snapshot исходников ES-DE с текущими локальными правками
 - `scripts/` - bootstrap и упаковка release-архива
-- `docs/` - инструкции по сборке, записи и публикации на GitHub
+- `docs/` - инструкции по сборке и пользовательская документация
 
 Что сознательно исключено из публичного release:
 - BIOS-файлы
@@ -24,4 +24,8 @@
 
 Подробные инструкции:
 - [Сборка и запись](docs/BUILD.md)
-- [Публикация на GitHub](docs/GITHUB_RELEASE.md)
+- [Руководство пользователя](docs/USER_MANUAL.md)
+
+Атрибуция bundled background music:
+- набор заменён на Batocera `es-background-musics`
+- лицензии и условия использования сохранены в `br2-external/package/gamestick-esde/assets/music/`
