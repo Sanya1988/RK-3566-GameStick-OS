@@ -17,6 +17,8 @@ lunasvg/lunasvg.pc
 !rapidjson/**
 !rlottie
 !rlottie/**
+!utfcpp
+!utfcpp/**
 rlottie/*.cmake
 rlottie/*.vcxproj
 rlottie/*.vcxproj.filters
