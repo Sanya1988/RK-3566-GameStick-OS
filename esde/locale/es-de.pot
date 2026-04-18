@@ -2862,6 +2862,9 @@ msgstr ""
 msgid "RIGHT THUMBSTICK CLICK"
 msgstr ""
 
+msgid "HOTKEY / GUIDE"
+msgstr ""
+
 msgid "ALREADY TAKEN"
 msgstr ""
 

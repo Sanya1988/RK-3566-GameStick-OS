@@ -24,7 +24,7 @@ struct InputConfigStructure {
     std::string icon;
 };
 
-static const int inputCount {24};
+static const int inputCount {25};
 static InputConfigStructure sGuiInputConfigList[inputCount];
 
 GuiInputConfig::GuiInputConfig(InputConfig* target,
@@ -280,6 +280,7 @@ void GuiInputConfig::populateConfigList()
     sGuiInputConfigList[21] = {"RightThumbstickLeft",  true, _("RIGHT THUMBSTICK LEFT"),  ":/graphics/help/thumbstick_left.svg"};
     sGuiInputConfigList[22] = {"RightThumbstickRight", true, _("RIGHT THUMBSTICK RIGHT"), ":/graphics/help/thumbstick_right.svg"};
     sGuiInputConfigList[23] = {"RightThumbstickClick", true, _("RIGHT THUMBSTICK CLICK"), ":/graphics/help/thumbstick_click.svg"};
+    sGuiInputConfigList[24] = {"Hotkey",              true, _("HOTKEY / GUIDE"),          ":/graphics/help/button_back_XBOX.svg"};
     // clang-format on
 }
 

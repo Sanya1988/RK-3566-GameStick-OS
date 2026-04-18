@@ -116,6 +116,202 @@ delete_cfg_key() {
 	sed -i "/^${key} = /d" "$cfg_file"
 }
 
+clear_hotkey_bindings() {
+	cfg_file=$1
+
+	delete_cfg_key "$cfg_file" input_enable_hotkey_btn
+	delete_cfg_key "$cfg_file" input_enable_hotkey_axis
+	delete_cfg_key "$cfg_file" input_enable_hotkey_key
+	delete_cfg_key "$cfg_file" input_exit_emulator_btn
+	delete_cfg_key "$cfg_file" input_exit_emulator_axis
+	delete_cfg_key "$cfg_file" input_exit_emulator_key
+	delete_cfg_key "$cfg_file" input_load_state_btn
+	delete_cfg_key "$cfg_file" input_load_state_axis
+	delete_cfg_key "$cfg_file" input_load_state_key
+	delete_cfg_key "$cfg_file" input_menu_toggle_btn
+	delete_cfg_key "$cfg_file" input_menu_toggle_axis
+	delete_cfg_key "$cfg_file" input_menu_toggle_key
+	delete_cfg_key "$cfg_file" input_save_state_btn
+	delete_cfg_key "$cfg_file" input_save_state_axis
+	delete_cfg_key "$cfg_file" input_save_state_key
+}
+
+hotkey_binding_value() {
+	input_type=$1
+	input_id=$2
+	input_value=${3:-1}
+
+	case "$input_type" in
+		button|key)
+			printf '"%s"' "$input_id"
+			;;
+		axis)
+			if [ "$input_value" = "-1" ]; then
+				printf '"-%s"' "$input_id"
+			else
+				printf '"+%s"' "$input_id"
+			fi
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+hotkey_binding_key_suffix() {
+	case "$1" in
+		button)
+			echo btn
+			;;
+		axis|key)
+			echo "$1"
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+extract_esde_hotkeys() {
+	input_xml=/storage/esde/settings/es_input.xml
+	[ -f "$input_xml" ] || return 0
+
+	awk '
+		function attr(line, key,    pattern, start, value) {
+			pattern = key "=\""
+			start = index(line, pattern)
+			if (!start)
+				return ""
+			value = substr(line, start + length(pattern))
+			sub(/".*/, "", value)
+			return value
+		}
+		/<inputConfig / {
+			device_name = attr($0, "deviceName")
+			hotkey_type = ""
+			hotkey_id = ""
+			hotkey_value = ""
+			start_type = ""
+			start_id = ""
+			start_value = ""
+			select_type = ""
+			select_id = ""
+			select_value = ""
+			load_type = ""
+			load_id = ""
+			load_value = ""
+			save_type = ""
+			save_id = ""
+			save_value = ""
+			next
+		}
+		/<input name="hotkey"/ || /<input name="hotkeyenable"/ {
+			hotkey_type = attr($0, "type")
+			hotkey_id = attr($0, "id")
+			hotkey_value = attr($0, "value")
+			next
+		}
+		/<input name="start"/ {
+			start_type = attr($0, "type")
+			start_id = attr($0, "id")
+			start_value = attr($0, "value")
+			next
+		}
+		/<input name="select"/ {
+			select_type = attr($0, "type")
+			select_id = attr($0, "id")
+			select_value = attr($0, "value")
+			next
+		}
+		/<input name="pageup"/ {
+			load_type = attr($0, "type")
+			load_id = attr($0, "id")
+			load_value = attr($0, "value")
+			next
+		}
+		/<input name="pagedown"/ {
+			save_type = attr($0, "type")
+			save_id = attr($0, "id")
+			save_value = attr($0, "value")
+			next
+		}
+		/<\/inputConfig>/ {
+			if (device_name != "")
+				printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", \
+					device_name, \
+					hotkey_type, hotkey_id, hotkey_value, \
+					start_type, start_id, start_value, \
+					select_type, select_id, select_value, \
+					load_type, load_id, load_value, \
+					save_type, save_id, save_value
+			device_name = ""
+			hotkey_type = ""
+			hotkey_id = ""
+			hotkey_value = ""
+			start_type = ""
+			start_id = ""
+			start_value = ""
+			select_type = ""
+			select_id = ""
+			select_value = ""
+			load_type = ""
+			load_id = ""
+			load_value = ""
+			save_type = ""
+			save_id = ""
+			save_value = ""
+		}
+	' "$input_xml"
+}
+
+sync_cfg_binding() {
+	cfg_file=$1
+	prefix=$2
+	input_type=$3
+	input_id=$4
+	input_value=${5:-1}
+
+	if binding_value="$(hotkey_binding_value "$input_type" "$input_id" "$input_value" 2>/dev/null)" && \
+		binding_key_suffix="$(hotkey_binding_key_suffix "$input_type" 2>/dev/null)"; then
+		set_cfg_value "$cfg_file" "${prefix}_${binding_key_suffix}" "$binding_value"
+		return 0
+	fi
+
+	return 1
+}
+
+sync_esde_hotkeys() {
+	[ -d "$TARGET_DIR" ] || return 0
+
+	extract_esde_hotkeys | while IFS="$(printf '\t')" read -r \
+		device_name \
+		hotkey_type hotkey_id hotkey_value \
+		start_type start_id start_value \
+		select_type select_id select_value \
+		load_type load_id load_value \
+		save_type save_id save_value; do
+		[ -n "$device_name" ] || continue
+
+		find "$TARGET_DIR" -maxdepth 1 -type f -name '*.cfg' | while IFS= read -r cfg_file; do
+			grep -Fq "input_device = \"$device_name\"" "$cfg_file" || continue
+
+			clear_hotkey_bindings "$cfg_file"
+
+			if binding_value="$(hotkey_binding_value "$hotkey_type" "$hotkey_id" "$hotkey_value" 2>/dev/null)" && \
+				binding_key_suffix="$(hotkey_binding_key_suffix "$hotkey_type" 2>/dev/null)"; then
+				set_cfg_value "$cfg_file" "input_enable_hotkey_${binding_key_suffix}" "$binding_value"
+				sync_cfg_binding "$cfg_file" input_menu_toggle "$select_type" "$select_id" "$select_value" || true
+				sync_cfg_binding "$cfg_file" input_exit_emulator "$start_type" "$start_id" "$start_value" || true
+				sync_cfg_binding "$cfg_file" input_load_state "$load_type" "$load_id" "$load_value" || true
+				sync_cfg_binding "$cfg_file" input_save_state "$save_type" "$save_id" "$save_value" || true
+				log_line "esde hotkey synced device=\"$device_name\" file=\"$(basename "$cfg_file")\" type=\"$hotkey_type\" id=\"$hotkey_id\" value=\"$hotkey_value\""
+			else
+				log_line "esde hotkey cleared device=\"$device_name\" file=\"$(basename "$cfg_file")\""
+			fi
+		done
+	done
+}
+
 template_for_device() {
 	name="$(normalize_name "$1")"
 	vendor=$(printf '%s' "$2" | tr 'A-F' 'a-f')
@@ -218,6 +414,7 @@ refresh_once() {
 	sync_seed_profiles
 	sync_user_profiles
 	apply_user_overrides
+	sync_esde_hotkeys
 
 	tmp_snapshot="$(mktemp "$STATE_DIR/devices.XXXXXX")"
 

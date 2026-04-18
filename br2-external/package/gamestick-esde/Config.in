@@ -17,7 +17,7 @@ config BR2_PACKAGE_GAMESTICK_ESDE
 	select BR2_PACKAGE_PUGIXML
 	select BR2_PACKAGE_SDL2
 	help
-	  ES-DE frontend integrated against the bundled esde source tree,
+	  ES-DE frontend integrated against the local work/esde source tree,
 	  configured for offline GameStick use and RetroArch launching.
 
 comment "gamestick-esde needs EGL/GLES, glibc, C++, threads and shared libs"

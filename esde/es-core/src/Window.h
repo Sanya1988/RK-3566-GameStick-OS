@@ -275,6 +275,7 @@ private:
     bool mInvalidatedCachedBackground;
     bool mInitiateCacheTimer;
     int mInvalidateCacheTimer;
+    bool mHotkeyHeld;
 
     std::atomic<int> mVideoPlayerCount;
 

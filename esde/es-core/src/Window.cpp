@@ -61,6 +61,7 @@ Window::Window() noexcept
     , mInvalidatedCachedBackground {false}
     , mInitiateCacheTimer {false}
     , mInvalidateCacheTimer {0}
+    , mHotkeyHeld {false}
     , mVideoPlayerCount {0}
     , mTopScale {0.5f}
     , mScaleAccumulator {0}
@@ -255,6 +256,14 @@ void Window::input(InputConfig* config, Input input)
     if (mBlockInput)
         return;
 
+    const auto isConfiguredHotkey {[config, &input] {
+        return config != nullptr &&
+               (config->isMappedTo("hotkey", input) || config->isMappedTo("hotkeyenable", input));
+    }};
+
+    if (isConfiguredHotkey())
+        mHotkeyHeld = (input.value != 0);
+
     const auto isMusicHotkey {[this, config, &input](const bool previousTrack) {
         if (input.value == 0)
             return false;
@@ -270,6 +279,37 @@ void Window::input(InputConfig* config, Input input)
         }
 
         return input.type == TYPE_KEY && input.id == (previousTrack ? SDLK_F2 : SDLK_F3);
+    }};
+
+    const auto adjustMusicVolume {[this](const bool increase) {
+        const int currentVolume {Settings::getInstance()->getInt("SoundVolumeBackgroundMusic")};
+        const int updatedVolume {std::clamp(currentVolume + (increase ? 5 : -5), 0, 100)};
+
+        if (updatedVolume == currentVolume)
+            return true;
+
+        Settings::getInstance()->setInt("SoundVolumeBackgroundMusic", updatedVolume);
+        Settings::getInstance()->saveFile();
+        queueInfoPopup(std::string {_("BACKGROUND MUSIC VOLUME")} + " " +
+                           std::to_string(updatedVolume) + "%",
+                       1500);
+        return true;
+    }};
+
+    const auto isMusicVolumeHotkey {[this, config, &input](const bool increase) {
+        if (input.value == 0)
+            return false;
+
+        // Never steal thumbstick directions while the user is configuring controller input.
+        if (dynamic_cast<GuiInputConfig*>(peekGui()) != nullptr)
+            return false;
+
+        // Left thumbstick directions are already used for UI navigation, so only use them
+        // while the dedicated hotkey / guide button is held.
+        if (!mHotkeyHeld || config == nullptr)
+            return false;
+
+        return config->isMappedTo(increase ? "leftthumbstickup" : "leftthumbstickdown", input);
     }};
 
     mTimeSinceLastInput = 0;
@@ -386,6 +426,18 @@ void Window::input(InputConfig* config, Input input)
     }
     else if (input.value != 0 && isMusicHotkey(false)) {
         if (MusicManager::getInstance().nextTrack())
+            return;
+        if (peekGui())
+            this->peekGui()->input(config, input);
+    }
+    else if (input.value != 0 && isMusicVolumeHotkey(true)) {
+        if (adjustMusicVolume(true))
+            return;
+        if (peekGui())
+            this->peekGui()->input(config, input);
+    }
+    else if (input.value != 0 && isMusicVolumeHotkey(false)) {
+        if (adjustMusicVolume(false))
             return;
         if (peekGui())
             this->peekGui()->input(config, input);

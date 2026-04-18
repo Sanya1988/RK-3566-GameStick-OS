@@ -3065,6 +3065,9 @@ msgstr "ПРАВЫЙ СТИК ВПРАВО"
 msgid "RIGHT THUMBSTICK CLICK"
 msgstr "ПРАВЫЙ СТИК, НАЖАТИЕ"
 
+msgid "HOTKEY / GUIDE"
+msgstr "КНОПКА HOTKEY / GUIDE"
+
 msgid "ALREADY TAKEN"
 msgstr "УЖЕ ЗАНЯТО"
 

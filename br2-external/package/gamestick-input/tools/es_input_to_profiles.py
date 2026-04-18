@@ -159,6 +159,16 @@ def add_retroarch_hotkey_binding(config: dict[str, str], input_type: str, input_
     config[f"input_enable_hotkey_{bind_type}"] = bind_value
 
 
+def add_retroarch_action_binding(
+    config: dict[str, str], prefix: str, binding: tuple[str, str] | None
+) -> None:
+    if not binding:
+        return
+
+    bind_type, bind_value = binding
+    config[f"{prefix}_{bind_type}"] = bind_value
+
+
 def add_retroarch_analog(config: dict[str, str], prefix: str, input_id: str, value: str) -> None:
     if value == "-1":
         config[f"{prefix}_minus_axis"] = f"-{input_id}"
@@ -173,6 +183,11 @@ def generate_autoconfig(element: ET.Element) -> tuple[str, str, str, str, str, s
     lookup_name = normalize_name(device_name)
     guid = element.attrib.get("deviceGUID", "")
     vendor, product = parse_vid_pid(guid)
+    start_binding: tuple[str, str] | None = None
+    select_binding: tuple[str, str] | None = None
+    load_state_binding: tuple[str, str] | None = None
+    save_state_binding: tuple[str, str] | None = None
+    hotkey_configured = False
 
     config: dict[str, str] = {
         "input_driver": '"udev"',
@@ -194,14 +209,29 @@ def generate_autoconfig(element: ET.Element) -> tuple[str, str, str, str, str, s
 
         if name in RETROARCH_DIGITAL:
             add_retroarch_digital(config, RETROARCH_DIGITAL[name], input_type, input_id, value)
+            if name == "start":
+                start_binding = retroarch_binding(input_type, input_id, value)
+            elif name == "select":
+                select_binding = retroarch_binding(input_type, input_id, value)
+            elif name == "pageup":
+                load_state_binding = retroarch_binding(input_type, input_id, value)
+            elif name == "pagedown":
+                save_state_binding = retroarch_binding(input_type, input_id, value)
         elif name in RETROARCH_ANALOG and input_type == "axis":
             add_retroarch_analog(config, RETROARCH_ANALOG[name], input_id, value)
-        elif name == "hotkey":
+        elif name in {"hotkey", "hotkeyenable"}:
+            hotkey_configured = True
             add_retroarch_hotkey_binding(config, input_type, input_id, value)
 
         sdl_value = sdl_binding(name, input_type, input_id, value)
         if sdl_value:
             sdl_bindings.append(sdl_value)
+
+    if hotkey_configured:
+        add_retroarch_action_binding(config, "input_menu_toggle", select_binding)
+        add_retroarch_action_binding(config, "input_exit_emulator", start_binding)
+        add_retroarch_action_binding(config, "input_load_state", load_state_binding)
+        add_retroarch_action_binding(config, "input_save_state", save_state_binding)
 
     ordered_keys = [
         "input_driver",
@@ -250,6 +280,19 @@ def generate_autoconfig(element: ET.Element) -> tuple[str, str, str, str, str, s
         "input_r_y_minus_axis",
         "input_enable_hotkey_btn",
         "input_enable_hotkey_axis",
+        "input_enable_hotkey_key",
+        "input_exit_emulator_btn",
+        "input_exit_emulator_axis",
+        "input_exit_emulator_key",
+        "input_load_state_btn",
+        "input_load_state_axis",
+        "input_load_state_key",
+        "input_menu_toggle_btn",
+        "input_menu_toggle_axis",
+        "input_menu_toggle_key",
+        "input_save_state_btn",
+        "input_save_state_axis",
+        "input_save_state_key",
     ]
 
     lines = ["# Generated from Batocera es_input.cfg", ""]

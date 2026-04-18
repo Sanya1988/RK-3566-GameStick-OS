@@ -22,7 +22,7 @@ settings_stamp="$base/.gamestick_settings_seed_v1"
 custom_systems_stamp="$base/.gamestick_custom_systems_v4"
 themes_stamp="$base/.gamestick_themes_v4"
 resources_stamp="$base/.gamestick_resources_v2"
-scripts_stamp="$base/.gamestick_scripts_v1"
+scripts_stamp="$base/.gamestick_scripts_v2"
 downloaded_media_stamp="$base/.gamestick_downloaded_media_v1"
 screensaver_defaults_stamp="$base/.gamestick_screensaver_defaults_v1"
 dirs_stamp="$base/.gamestick_create_system_dirs_v4"
@@ -291,7 +291,8 @@ if [ ! -f "$resources_stamp" ] && [ -d "$seed_root/resources" ]; then
 fi
 
 if [ ! -f "$scripts_stamp" ] || \
-	[ ! -f "$base/scripts/poweroff/10-gamestick-poweroff-marker.sh" ]; then
+	[ ! -f "$base/scripts/poweroff/10-gamestick-poweroff-marker.sh" ] || \
+	[ ! -f "$base/scripts/controls-changed/10-gamestick-refresh-input-profiles.sh" ]; then
 	if [ -d "$seed_root/scripts" ]; then
 		mkdir -p "$base/scripts"
 		cp -R "$seed_root/scripts/." "$base/scripts/"

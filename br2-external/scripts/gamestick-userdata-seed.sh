@@ -131,7 +131,7 @@ seed_userdata_from_root() {
 	: >"$userdata_dir/esde/.gamestick_custom_systems_v4"
 	: >"$userdata_dir/esde/.gamestick_themes_v4"
 	: >"$userdata_dir/esde/.gamestick_resources_v2"
-	: >"$userdata_dir/esde/.gamestick_scripts_v1"
+	: >"$userdata_dir/esde/.gamestick_scripts_v2"
 	: >"$userdata_dir/esde/.gamestick_downloaded_media_v1"
 	: >"$userdata_dir/music/.gamestick_music_seed_v1"
 	: >"$userdata_dir/roms/.gamestick_roms_seed_v1"
