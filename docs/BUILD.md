@@ -1,6 +1,6 @@
 # Сборка и запись
 
-## Вариант 1. Сборка из git-репозитория
+## Сборка из git-репозитория
 
 ```bash
 git clone --recursive <YOUR_GITHUB_REPO_URL> br2
@@ -16,18 +16,6 @@ make
 git submodule update --init --recursive
 ```
 
-## Вариант 2. Сборка из release-архива
-
-Если скачан release-архив `.tar.gz`, то `buildroot` уже будет лежать внутри архива:
-
-```bash
-tar -xzf gamestick-os-br2-*.tar.gz
-cd br2
-./scripts/init-build.sh
-cd output
-make
-```
-
 ## Что делает init-build.sh
 
 Скрипт создаёт `output/` и запускает:
@@ -36,7 +24,7 @@ make
 make -C buildroot O=$PWD/output BR2_EXTERNAL=$PWD/br2-external gamestick_rk3566_m16_defconfig
 ```
 
-Перед этим он автоматически накладывает локальные compatibility patches на чистый `buildroot` submodule. Поэтому и для `git clone --recursive`, и для release-архива нужно использовать именно `./scripts/init-build.sh`, а не вызывать `make ... defconfig` вручную.
+Перед этим он автоматически накладывает локальные compatibility patches на чистый `buildroot` submodule. Поэтому для `git clone --recursive`, нужно использовать именно `./scripts/init-build.sh`, а не вызывать `make ... defconfig` вручную.
 
 После этого обычная сборка идёт из `output/`:
 
@@ -47,7 +35,7 @@ make
 
 ## Запись образа на карту
 
-Подставь свой диск вместо `/dev/sdX`.
+Подставьте свой диск вместо `/dev/sdX`.
 
 ```bash
 cd /path/to/br2
@@ -63,7 +51,7 @@ sync
 
 ## Первый запуск
 
-На свежей карте используется двухэтапная инициализация `USERDATA`:
+На свежей карте используется двухэтапная инициализация раздела `USERDATA`:
 - первый запуск: первый этап и выключение
 - затем нужно включить стик ещё раз
 - второй запуск: второй этап и далее обычная загрузка системы
