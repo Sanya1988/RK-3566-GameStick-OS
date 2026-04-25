@@ -3,7 +3,7 @@
 ## Сборка из git-репозитория
 
 ```bash
-git clone --recursive <YOUR_GITHUB_REPO_URL> br2
+git clone --recursive https://github.com/Sanya1988/RK-3566-GameStick-OS.git br2
 cd br2
 ./scripts/init-build.sh
 cd output
