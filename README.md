@@ -17,15 +17,6 @@
 Что сознательно исключено из публичного release:
 - BIOS-файлы
 
-Быстрый старт:
-1. Инициализировать submodule:
-   `git submodule update --init --recursive`
-2. Подготовить output:
-   `./scripts/init-build.sh`
-   Этот шаг обязателен: скрипт автоматически накладывает локальные compatibility patches на чистый `buildroot` submodule.
-3. Собрать:
-   `cd output && make`
-
 Подробные инструкции:
 - [Сборка и запись](docs/BUILD.md)
 - [Руководство пользователя](docs/USER_MANUAL.md)
