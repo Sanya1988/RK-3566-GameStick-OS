@@ -1,5 +1,7 @@
 # GameStick OS Build Release
 
+![Game Stick M16](https://4pda.to/forum/index.php?showtopic=1099942#)
+
 Данная сборка представляет собой версию `GameStick OS`для Stick Game M16 4K Ultra HD (Gold Stick) и является полностью собранной с нуля ОС на базе buildroot. В качестве фронтэнда используется связка EmulationStation Desktop Edition (ES-DE) и Retroarch.
 
 Из существенных доработок можно отметить проигрывание музыки в главном меню и полное меню Retroarch в отличии от стоковой пошивки. Все сетевые функции убраны. Добавлена поддержка сторонних геймпадов. Так же реализована автоматическая разметка раздела с ROMs (как в Batocera). 
