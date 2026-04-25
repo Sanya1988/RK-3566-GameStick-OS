@@ -1,6 +1,6 @@
 # GameStick OS Build Release
 
-<picture>https://cs12d7a.4pda.ws/32280949/M%26%23225%3By-Ch%26%23417%3Bi-Game-Stick-4K-V%26%23224%3Bng-M16-M%26%237899%3Bi-2023-64GB-20000-Tr%26%23242%3B-Ch%26%23417%3Bi-M%26%237899%3Bi-PS1-PSP-N64-M%26%23225%3By-Ch%26%23417%3Bi-Game-C%26%237847%3Bm-Tay-Kh%26%23244%3Bng-D%26%23226%3By-TV-2023-ok.jpg?s=00ae705f5a9cfc9569ecf3d9000000001ebbffc69d7ccdfd50ff0e53b6b51b8a</picture>
+![gamestick](https://cs12d7a.4pda.ws/32280949/M%26%23225%3By-Ch%26%23417%3Bi-Game-Stick-4K-V%26%23224%3Bng-M16-M%26%237899%3Bi-2023-64GB-20000-Tr%26%23242%3B-Ch%26%23417%3Bi-M%26%237899%3Bi-PS1-PSP-N64-M%26%23225%3By-Ch%26%23417%3Bi-Game-C%26%237847%3Bm-Tay-Kh%26%23244%3Bng-D%26%23226%3By-TV-2023-ok.jpg?s=00ae705f5a9cfc9569ecf3d9000000001ebbffc69d7ccdfd50ff0e53b6b51b8a)
 
 Данная сборка представляет собой версию `GameStick OS`для Stick Game M16 4K Ultra HD (Gold Stick) и является полностью собранной с нуля ОС на базе buildroot. В качестве фронтэнда используется связка EmulationStation Desktop Edition (ES-DE) и Retroarch.
 
