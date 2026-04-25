@@ -1,0 +1,19 @@
+GameStick OS
+Copyright 2026 Sanya1988
+
+This project contains original GameStick OS project files licensed under the Apache License 2.0.
+
+This repository and generated builds may also include third-party components.
+Third-party components retain their original licenses.
+
+Major third-party components include, but are not limited to:
+- Buildroot
+- ES-DE
+- RetroArch
+- libretro cores
+- Linux kernel
+- U-Boot
+- BusyBox
+- bundled open-source packages
+
+BIOS files and commercial ROM files are not included in the public release.
